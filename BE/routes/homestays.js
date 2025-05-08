@@ -1,0 +1,41 @@
+const express = require('express');
+const {
+  getHomestays,
+  getHomestay,
+  createHomestay,
+  updateHomestay,
+  deleteHomestay,
+  homestayPhotoUpload
+} = require('../controllers/homestays');
+
+const Homestay = require('../models/Homestay'); // Cần cho advancedResults nếu dùng
+
+// Include other resource routers
+const bookingRouter = require('./bookings');
+const reviewRouter = require('./reviews');
+
+const router = express.Router();
+
+const { protect, authorize } = require('../middlewares/auth');
+const advancedResults = require('../middlewares/advancedResults');
+
+// Re-route into other resource routers
+router.use('/:homestayId/bookings', bookingRouter);
+router.use('/:homestayId/reviews', reviewRouter);
+
+// Route cho upload ảnh (cần middleware upload)
+// Ví dụ: router.route('/:id/photo').put(protect, authorize('host', 'admin'), homestayPhotoUpload);
+// Cần cài đặt và cấu hình multer trước khi dùng route này
+
+router
+  .route('/')
+  .get(advancedResults(Homestay, 'reviews'), getHomestays) // Sử dụng advancedResults, populate reviews
+  .post(protect, authorize('host', 'admin'), createHomestay);
+
+router
+  .route('/:id')
+  .get(getHomestay)
+  .put(protect, authorize('host', 'admin'), updateHomestay)
+  .delete(protect, authorize('host', 'admin'), deleteHomestay);
+
+module.exports = router;
