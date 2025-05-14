@@ -2,6 +2,23 @@ const Booking = require('../models/Booking');
 const Homestay = require('../models/Homestay');
 const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middlewares/async');
+const sortObject = require('../utils/objectHelpers');
+const { ProductCode, VnpLocale, dateFormat, VNPay, ignoreLogger } = require('vnpay');
+
+const vnpay = new VNPay({
+    tmnCode: "H0CR4KOU",
+    secureSecret: "BK3LD51V5KHBV5TWWNYNQGN0XASUV7ZU",
+    vnpayHost: 'https://sandbox.vnpayment.vn',
+    testMode: true, // tùy chọn, ghi đè vnpayHost thành sandbox nếu là true
+    hashAlgorithm: 'SHA512', // tùy chọn
+    enableLog: true, // tùy chọn
+    loggerFn: ignoreLogger, // tùy chọn
+    endpoints: {
+        paymentEndpoint: 'paymentv2/vpcpay.html',
+        queryDrRefundEndpoint: 'merchant_webapi/api/transaction',
+        getBankListEndpoint: 'qrpayauth/api/merchant/get_bank_list',
+    }, // tùy chọn
+});
 
 // @desc    Lấy tất cả các booking
 // @route   GET /api/bookings
@@ -73,34 +90,119 @@ exports.getBooking = asyncHandler(async (req, res, next) => {
 // @route   POST /api/homestays/:homestayId/bookings
 // @access  Private (User)
 exports.createBooking = asyncHandler(async (req, res, next) => {
-    req.body.homestay = req.params.homestayId;
-    req.body.user = req.user.id; // Gán user là người đang đăng nhập
+    const {
+        userId,
+        propertyId,
+        checkIn,
+        checkOut,
+        guestCount,
+        totalPrice,
+        bookingStatus,
+        paymentStatus
+    } = req.body;
 
-    const homestay = await Homestay.findById(req.params.homestayId);
+    // console.log(req.user._id.toString())
 
+    // 1. Kiểm tra homestay tồn tại
+    const homestay = await Homestay.findById(propertyId);
     if (!homestay) {
         return next(
-            new ErrorResponse(`Không tìm thấy homestay với id ${req.params.homestayId}`, 404)
+            new ErrorResponse(`Không tìm thấy homestay với id ${propertyId}`, 404)
         );
     }
 
-    // Tính toán totalPrice dựa trên giá homestay và số ngày ở (cần logic chi tiết hơn)
-    const checkIn = new Date(req.body.checkInDate);
-    const checkOut = new Date(req.body.checkOutDate);
-    const daysOfStay = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+    // 2. Kiểm tra ngày hợp lệ
+    const checkInDate = new Date(checkIn);
+    const checkOutDate = new Date(checkOut);
+    const daysOfStay = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
 
     if (daysOfStay <= 0) {
         return next(new ErrorResponse('Ngày trả phòng phải sau ngày nhận phòng', 400));
     }
 
-    req.body.totalPrice = daysOfStay * homestay.price;
+    // 3. Kiểm tra xem đã có người đặt và thanh toán trong khoảng thời gian này chưa
+    const existingBooking = await Booking.findOne({
+        homestay: propertyId,
+        paymentStatus: 'paid',
+        $or: [
+            {
+                checkInDate: { $lt: checkOutDate },
+                checkOutDate: { $gt: checkInDate }
+            }
+        ]
+    });
 
-    const booking = await Booking.create(req.body);
+    if (existingBooking) {
+        return next(new ErrorResponse('Homestay này đã được đặt trong khoảng thời gian bạn chọn.', 400));
+    }
+
+    // 4. Tạo booking
+    const booking = await Booking.create({
+        user: userId,
+        homestay: propertyId,
+        checkInDate,
+        checkOutDate,
+        numberOfGuests: guestCount,
+        totalPrice,
+        bookingStatus,
+        paymentStatus,
+    });
 
     res.status(201).json({
         success: true,
         data: booking
     });
+});
+
+exports.createPayment = asyncHandler(async (req, res, next) => {
+    const { totalPrice, orderId } = req.body;
+
+    const tomorrow = new Date();
+    tomorrow.setMinutes(tomorrow.getMinutes() + 15);
+    
+    const paymentUrl = vnpay.buildPaymentUrl({
+        vnp_Amount: totalPrice,
+        vnp_IpAddr: '13.160.92.202',
+        vnp_TxnRef: orderId,
+        vnp_OrderInfo: 'Thanh toan don hang 123456',
+        vnp_OrderType: ProductCode.Other,
+        vnp_ReturnUrl: `http://localhost:8080/payment-success?orderid=${orderId}`,
+        vnp_Locale: VnpLocale.VN,
+        vnp_CreateDate: dateFormat(new Date()),
+        vnp_ExpireDate: dateFormat(tomorrow),
+    });
+
+    
+    res.json({
+        success: true,
+        data: paymentUrl
+    });
+})
+
+exports.paymentSuccess = asyncHandler(async (req, res, next) => {
+    const { status, orderId } = req.body;
+
+    if (status === 'success') {
+        const booking = await Booking.findOne({ _id: orderId });
+
+        if (!booking) {
+            return next(new ErrorResponse('Không tìm thấy đơn đặt phòng', 404));
+        }
+
+        booking.paymentStatus = 'paid';
+        await booking.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Cập nhật trạng thái thanh toán thành công',
+            data: booking
+        });
+    } else {
+        res.status(400).json({
+            success: false,
+            message: 'Thanh toán không thành công hoặc bị huỷ'
+        });
+    }
 });
 
 // @desc    Hủy đặt phòng

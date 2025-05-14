@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Star, CalendarIcon, Users, AlertCircle } from 'lucide-react';
@@ -9,23 +8,28 @@ import { useAuth } from '@/contexts/auth/useAuth';
 import { useApi } from '@/hooks/useApi';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useOrder } from '@/hooks/useOrder';
+import { OrderRequest } from '@/types/order';
 
 interface BookingFormProps {
   price: number;
   rating: number;
   maxGuests: number;
   propertyId: string;
+  propertyName: string;
 }
 
-const BookingForm = ({ price, rating, maxGuests, propertyId }: BookingFormProps) => {
+const BookingForm = ({ price, rating, maxGuests, propertyId, propertyName }: BookingFormProps) => {
   const [checkIn, setCheckIn] = useState<Date | undefined>(undefined);
   const [checkOut, setCheckOut] = useState<Date | undefined>(undefined);
   const [guestCount, setGuestCount] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { isAuthenticated } = useAuth();
-  const { createData, isLoading, error } = useApi();
+  const { isAuthenticated, user } = useAuth();
+  const { createOrder, isLoading, error } = useOrder();
   const navigate = useNavigate();
+
+  
 
   // Calculate nights and total price
   const nights = checkIn && checkOut 
@@ -70,21 +74,40 @@ const BookingForm = ({ price, rating, maxGuests, propertyId }: BookingFormProps)
     setIsSubmitting(true);
     
     // Create the booking request
-    const bookingData = {
-      propertyId,
-      checkIn: format(checkIn, 'yyyy-MM-dd'),
-      checkOut: format(checkOut, 'yyyy-MM-dd'),
+    const bookingData: OrderRequest = {
+      userId: user._id,
+      propertyId: "6812ac80eebbfcfb29cc2468",
+      checkIn,
+      checkOut,
       guestCount,
       totalPrice,
-      status: 'pending'
+      bookingStatus: 'pending',
+      paymentStatus: 'pending',
     };
+    console.log(bookingData); // Log the booking data to the conso
 
     try {
-      const response = await createData('/api/bookings', bookingData);
+      // const response = await createData('/api/bookings', bookingData);
+      const response = await createOrder(bookingData);
+      // const response = {success: true, data: {}}; // Tạm thời để test, sau đó sẽ thay thế bằng createOrder
       
       if (response.success) {
-        toast.success('Đặt phòng thành công. Vui lòng chờ xác nhận từ chủ homestay.');
-        // You could redirect to a booking confirmation page here if needed
+        toast.success('Đặt phòng thành công!');
+        
+        // Navigate to payment method page
+        navigate('/payment-method', {
+          state: {
+            bookingDetails: {
+              propertyId,
+              propertyName,
+              checkIn: format(checkIn, 'dd/MM/yyyy'),
+              checkOut: format(checkOut, 'dd/MM/yyyy'),
+              guestCount,
+              totalPrice,
+              orderId: response.data.data._id
+            }
+          }
+        });
       } else {
         if (response.error?.includes('conflict')) {
           toast.error('Ngày bạn chọn đã có người đặt rồi. Vui lòng chọn ngày khác.');

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, User, LogOut } from "lucide-react";
+import { Menu, X, User, LogOut, Calendar } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import {
   DropdownMenu,
@@ -83,7 +83,7 @@ const Navbar = () => {
                   <Link to="/profile">Hồ sơ cá nhân</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/bookings">Lịch sử đặt phòng</Link>
+                  <Link to="/booking-history">Lịch sử đặt phòng</Link>
                 </DropdownMenuItem>
                 {user?.role === 'admin' && (
                   <DropdownMenuItem asChild>
@@ -178,10 +178,11 @@ const Navbar = () => {
                       Hồ sơ cá nhân
                     </Link>
                     <Link 
-                      to="/bookings" 
+                      to="/booking-history" 
                       className="py-2 hover:text-brand-blue"
                       onClick={toggleMenu}
                     >
+                      <Calendar size={16} className="inline mr-2" />
                       Lịch sử đặt phòng
                     </Link>
                     <Button 

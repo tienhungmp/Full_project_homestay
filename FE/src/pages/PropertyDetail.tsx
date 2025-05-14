@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -137,7 +136,7 @@ const properties = [
 
 const PropertyDetail = () => {
   const { id } = useParams();
-  const property = properties.find(p => p.id === id) || properties[0];
+  const property = properties.find(p => p.id === id) || properties[0]; // Fallback to first property if not found
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -182,6 +181,7 @@ const PropertyDetail = () => {
               rating={property.rating}
               maxGuests={property.guests}
               propertyId={property.id}
+              propertyName={property.name}
             />
           </div>
         </div>

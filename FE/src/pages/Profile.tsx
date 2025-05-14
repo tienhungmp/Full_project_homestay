@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -6,7 +5,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import { User, Mail, Phone, MapPin, Shield, Calendar } from "lucide-react";
+import { User, Mail, Phone, MapPin, Shield, Calendar, ExternalLink } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -15,7 +14,107 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+// Mock booking data
+const mockBookings = [
+  {
+    id: "BOOK-12345",
+    propertyName: "Villa Hạ Long Bay View",
+    checkIn: "15/06/2023",
+    checkOut: "20/06/2023",
+    totalPrice: 8500000,
+    status: "completed",
+    imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1000&auto=format&fit=crop"
+  },
+  {
+    id: "BOOK-67890",
+    propertyName: "Coco Beach Resort Phú Quốc",
+    checkIn: "10/08/2023",
+    checkOut: "15/08/2023",
+    totalPrice: 6300000,
+    status: "completed",
+    imageUrl: "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?q=80&w=1000&auto=format&fit=crop"
+  },
+  {
+    id: "BOOK-24680",
+    propertyName: "Mường Thanh Grand Đà Nẵng",
+    checkIn: "24/12/2023",
+    checkOut: "28/12/2023",
+    totalPrice: 4800000,
+    status: "cancelled",
+    imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1000&auto=format&fit=crop"
+  },
+  {
+    id: "BOOK-13579",
+    propertyName: "Sapa Eco Retreat",
+    checkIn: "03/03/2024",
+    checkOut: "07/03/2024",
+    totalPrice: 5200000,
+    status: "completed",
+    imageUrl: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=1000&auto=format&fit=crop"
+  },
+  {
+    id: "BOOK-97531",
+    propertyName: "Duplex Apartment Thảo Điền",
+    checkIn: "15/05/2024",
+    checkOut: "25/05/2024",
+    totalPrice: 12800000,
+    status: "upcoming",
+    imageUrl: "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?q=80&w=1000&auto=format&fit=crop"
+  },
+  {
+    id: "BOOK-65432",
+    propertyName: "Homestay Tam Cốc Ninh Bình",
+    checkIn: "05/07/2024",
+    checkOut: "10/07/2024",
+    totalPrice: 3200000,
+    status: "upcoming",
+    imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1000&auto=format&fit=crop"
+  },
+  {
+    id: "BOOK-78901",
+    propertyName: "Khách sạn Continental Sài Gòn",
+    checkIn: "20/08/2024",
+    checkOut: "25/08/2024",
+    totalPrice: 7500000,
+    status: "upcoming",
+    imageUrl: "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?q=80&w=1000&auto=format&fit=crop"
+  },
+  {
+    id: "BOOK-23456",
+    propertyName: "Flamingo Đại Lải Resort",
+    checkIn: "10/09/2024",
+    checkOut: "15/09/2024",
+    totalPrice: 9800000,
+    status: "upcoming",
+    imageUrl: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=1000&auto=format&fit=crop"
+  }
+];
+
+// Helper function to get status badge color
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'completed':
+      return 'bg-green-500 hover:bg-green-600';
+    case 'cancelled':
+      return 'bg-red-500 hover:bg-red-600';
+    case 'upcoming':
+      return 'bg-blue-500 hover:bg-blue-600';
+    default:
+      return 'bg-gray-500 hover:bg-gray-600';
+  }
+};
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -25,6 +124,11 @@ const Profile = () => {
     logout();
     navigate('/');
   };
+
+  // Determine if we need scrolling (more than 7 items)
+  const needsScrolling = mockBookings.length > 7;
+  const maxTableHeight = needsScrolling ? "400px" : "auto";
+  const maxCardsHeight = needsScrolling ? "500px" : "auto";
 
   return (
     <ProtectedRoute>
@@ -115,17 +219,132 @@ const Profile = () => {
                   <CardDescription>Xem thông tin các đơn đặt phòng của bạn</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center py-12 text-gray-500">
-                    <Calendar className="mx-auto h-12 w-12 text-gray-300 mb-2" />
-                    <p>Bạn chưa có đơn đặt phòng nào</p>
-                    <Button 
-                      variant="outline" 
-                      className="mt-4"
-                      onClick={() => navigate('/search')}
-                    >
-                      Tìm kiếm chỗ nghỉ
-                    </Button>
-                  </div>
+                  {mockBookings.length > 0 ? (
+                    <div className="space-y-4">
+                      {/* Desktop view with table */}
+                      <div className="hidden md:block">
+                        <ScrollArea className={needsScrolling ? "h-[400px]" : ""}>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Mã đặt phòng</TableHead>
+                                <TableHead>Chỗ ở</TableHead>
+                                <TableHead>Ngày</TableHead>
+                                <TableHead>Giá</TableHead>
+                                <TableHead>Trạng thái</TableHead>
+                                <TableHead>Chi tiết</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {mockBookings.map((booking) => (
+                                <TableRow key={booking.id}>
+                                  <TableCell className="font-medium">{booking.id}</TableCell>
+                                  <TableCell>{booking.propertyName}</TableCell>
+                                  <TableCell>{booking.checkIn} - {booking.checkOut}</TableCell>
+                                  <TableCell>{booking.totalPrice.toLocaleString('vi-VN')}đ</TableCell>
+                                  <TableCell>
+                                    <Badge className={getStatusColor(booking.status)}>
+                                      {booking.status === 'completed' ? 'Hoàn thành' : 
+                                       booking.status === 'cancelled' ? 'Đã hủy' : 'Sắp tới'}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="h-8 w-8 p-0"
+                                      onClick={() => navigate('/payment-success', { 
+                                        state: { 
+                                          paymentDetails: {
+                                            propertyName: booking.propertyName,
+                                            checkIn: booking.checkIn,
+                                            checkOut: booking.checkOut,
+                                            totalPrice: booking.totalPrice,
+                                            guestCount: 2,
+                                            paymentMethod: "Thẻ tín dụng"
+                                          },
+                                          bookingId: booking.id
+                                        } 
+                                      })}
+                                    >
+                                      <ExternalLink className="h-4 w-4" />
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </ScrollArea>
+                      </div>
+                      
+                      {/* Mobile view with cards */}
+                      <div className="md:hidden">
+                        <ScrollArea className={needsScrolling ? "h-[500px]" : ""}>
+                          <div className="grid gap-4">
+                            {mockBookings.map((booking) => (
+                              <Card key={booking.id} className="overflow-hidden">
+                                <div className="flex">
+                                  <div className="w-1/3">
+                                    <img 
+                                      src={booking.imageUrl} 
+                                      alt={booking.propertyName}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  </div>
+                                  <div className="w-2/3 p-4">
+                                    <div className="flex justify-between items-start mb-2">
+                                      <h3 className="font-semibold text-sm line-clamp-1">{booking.propertyName}</h3>
+                                      <Badge className={getStatusColor(booking.status)}>
+                                        {booking.status === 'completed' ? 'Hoàn thành' : 
+                                         booking.status === 'cancelled' ? 'Đã hủy' : 'Sắp tới'}
+                                      </Badge>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mb-1">Mã: {booking.id}</p>
+                                    <p className="text-xs text-gray-500 mb-2">{booking.checkIn} - {booking.checkOut}</p>
+                                    <div className="flex justify-between items-center">
+                                      <span className="font-medium text-sm">{booking.totalPrice.toLocaleString('vi-VN')}đ</span>
+                                      <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        className="h-7 text-xs"
+                                        onClick={() => navigate('/payment-success', { 
+                                          state: { 
+                                            paymentDetails: {
+                                              propertyName: booking.propertyName,
+                                              checkIn: booking.checkIn,
+                                              checkOut: booking.checkOut,
+                                              totalPrice: booking.totalPrice,
+                                              guestCount: 2,
+                                              paymentMethod: "Thẻ tín dụng"
+                                            },
+                                            bookingId: booking.id
+                                          } 
+                                        })}
+                                      >
+                                        Chi tiết
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </Card>
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 text-gray-500">
+                      <Calendar className="mx-auto h-12 w-12 text-gray-300 mb-2" />
+                      <p>Bạn chưa có đơn đặt phòng nào</p>
+                      <Button 
+                        variant="outline" 
+                        className="mt-4"
+                        onClick={() => navigate('/search')}
+                      >
+                        Tìm kiếm chỗ nghỉ
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

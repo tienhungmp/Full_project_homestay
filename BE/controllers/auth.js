@@ -184,7 +184,7 @@ const sendTokenResponse = async (user, statusCode, res) => {
     // .cookie('token', token, options) // Option: Gửi token qua cookie
     .json({
       success: true,
-      tokens: { access: token, refresh: refreshToken},
+      tokens: { accessToken: token, refreshToken: refreshToken},
       user: user // Gửi thông tin user về client
     });
 };
