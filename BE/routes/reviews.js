@@ -20,7 +20,7 @@ router
   .get(advancedResults(Review, {
     path: 'homestay user',
     select: 'name description'
-  }), getReviews) // Sử dụng advancedResults
+  }), getReviews)
   .post(protect, authorize('user', 'admin'), addReview);
 
 router

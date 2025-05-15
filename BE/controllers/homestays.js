@@ -14,7 +14,7 @@ exports.getHomestays = asyncHandler(async (req, res, next) => {
     res.status(200).json({
         success: true,
         total: homestays.length,
-        data: homestays
+        data: homestays,
     });
     // Nếu dùng advancedResults:
     // res.status(200).json(res.advancedResults);
@@ -24,7 +24,15 @@ exports.getHomestays = asyncHandler(async (req, res, next) => {
 // @route   GET /api/homestays/:id
 // @access  Public
 exports.getHomestay = asyncHandler(async (req, res, next) => {
-    const homestay = await Homestay.findById(req.params.id).populate('host', 'name email').populate('reviews'); // Populate thêm reviews nếu cần
+    const homestay = await Homestay.findById(req.params.id)
+    .populate('host', 'name email') // populate host với name & email
+    .populate({
+        path: 'reviews',              // populate reviews
+        populate: {
+        path: 'user',               // populate user trong từng review
+        select: 'name avatar'       // chỉ lấy trường cần thiết của user
+        }
+    });
 
     if (!homestay) {
         return next(
@@ -218,5 +226,25 @@ exports.homestayPhotoUpload = asyncHandler(async (req, res, next) => {
             success: true,
             data: `/uploads/${file.name}`
         });
+    });
+});
+
+
+exports.getTopRatedHomestays = asyncHandler(async (req, res, next) => {
+    const limit = parseInt(req.query.limit) || 6;
+    
+    const topHomestays = await Homestay.find({
+        // Only include homestays that have at least one review/rating
+        averageRating: { $exists: true, $ne: null }
+    })
+    .sort({ averageRating: -1 }) // Sort by rating in descending order
+    .limit(limit)
+    .populate('host', 'name email')
+    .populate('reviews');
+
+    res.status(200).json({
+        success: true,
+        count: topHomestays.length,
+        data: topHomestays
     });
 });

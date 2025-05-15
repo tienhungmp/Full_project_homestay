@@ -59,12 +59,6 @@ const Navbar = () => {
               Quản trị
             </Link>
           )}
-          
-          {isAuthenticated && (user?.role === 'host' || user?.role === 'admin') && (
-            <Link to="/host" className="text-sm font-medium text-green-600 hover:text-green-700 transition-colors">
-              Quản lý chỗ nghỉ
-            </Link>
-          )}
         </nav>
         
         <div className="hidden md:flex items-center gap-2">

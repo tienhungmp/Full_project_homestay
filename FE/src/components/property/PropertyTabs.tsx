@@ -7,11 +7,11 @@ import PropertyReviews from './PropertyReviews';
 import PropertyPolicies from './PropertyPolicies';
 
 interface Review {
-  id: string;
-  user: string;
+  _id: string;
+  user: {name:string};
   rating: number;
-  date: string;
-  comment: string;
+  createdAt: string;
+  text: string;
 }
 
 interface PropertyTabsProps {

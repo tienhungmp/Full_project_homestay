@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Sentiment Analysis API</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        
+        :root {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --accent: #f72585;
+            --light: #f8f9fa;
+            --dark: #212529;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            max-width: 900px;
+            width: 90%;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+        
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 15px;
+        }
+        
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 2px;
+        }
+        
+        p {
+            font-size: 1.2rem;
+            text-align: center;
+            margin: 20px 0;
+            color: #555;
+            line-height: 1.8;
+        }
+        
+        .features {
+            display: flex;
+            justify-content: space-around;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+        
+        .feature {
+            flex: 1;
+            min-width: 200px;
+            text-align: center;
+            padding: 20px;
+            margin: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .feature:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature h3 {
+            color: var(--secondary);
+            margin-bottom: 15px;
+        }
+        
+        .feature p {
+            font-size: 0.95rem;
+            color: #666;
+        }
+        
+        .emoji {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+        
+        .highlight {
+            color: var(--accent);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sentiment Analysis API</h1>
+        <p>Chào mừng bạn đến với dịch vụ <span class="highlight">nhận diện trạng thái cảm xúc</span> từ bình luận. Hệ thống AI của chúng tôi phân tích văn bản và xác định cảm xúc tích cực, tiêu cực hoặc trung tính.</p>
+        
+        <div class="features">
+            <div class="feature">
+                <span class="emoji">😊</span>
+                <h3>Tích Cực</h3>
+                <p>Nhận diện các bình luận mang tính tích cực, khen ngợi và hài lòng.</p>
+            </div>
+            <div class="feature">
+                <span class="emoji">😐</span>
+                <h3>Trung Tính</h3>
+                <p>Phân loại các bình luận mang tính trung lập hoặc khách quan.</p>
+            </div>
+            <div class="feature">
+                <span class="emoji">😠</span>
+                <h3>Tiêu Cực</h3>
+                <p>Xác định các bình luận mang tính tiêu cực, phàn nàn hoặc không hài lòng.</p>
+            </div>
+        </div>
+        
+        <p>Được xây dựng bằng <span class="highlight">Flask</span> và các công nghệ <span class="highlight">Machine Learning</span> tiên tiến.</p>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="/analyze" style="display: inline-block; background: linear-gradient(90deg, var(--primary), var(--secondary)); color: white; text-decoration: none; padding: 12px 30px; border-radius: 8px; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
+                Thử Ngay
+            </a>
+        </div>
+    </div>
+</body>
+</html>

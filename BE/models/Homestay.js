@@ -34,6 +34,8 @@ const HomestaySchema = new mongoose.Schema({
         'Washing Machine',
         'Free Parking',
         'Pool',
+        'Garden',
+        'BBQ',
         'Hot Water',
         'Refrigerator',
         'Microwave',
@@ -57,6 +59,16 @@ const HomestaySchema = new mongoose.Schema({
     type: Number,
     min: [1, 'Rating phải từ 1 sao trở lên'],
     max: [5, 'Rating không được quá 5 sao'],
+  },
+  numberOfRooms: {
+    type: Number,
+    required: [true, 'Vui lòng nhập số phòng'],
+    min: [1, 'Phải có ít nhất 1 phòng'],
+  },
+  maxGuestsPerRoom: {
+    type: Number,
+    required: [true, 'Vui lòng nhập số khách tối đa mỗi phòng'],
+    min: [1, 'Phải có ít nhất 1 khách mỗi phòng'],
   },
   createdAt: {
     type: Date,

@@ -2,6 +2,7 @@ const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middlewares/async');
 const Review = require('../models/Review');
 const Homestay = require('../models/Homestay');
+const Booking = require('../models/Booking');
 
 // @desc    Lấy tất cả các review
 // @route   GET /api/reviews
@@ -47,32 +48,72 @@ exports.getReview = asyncHandler(async (req, res, next) => {
 // @route   POST /api/homestays/:homestayId/reviews
 // @access  Private (User)
 exports.addReview = asyncHandler(async (req, res, next) => {
-    req.body.homestay = req.params.homestayId;
-    req.body.user = req.user.id; // Gán user là người đang đăng nhập
+    console.log(req.user);
+    const {userId, homestayId, textReview, rating} = req.body;
 
-    const homestay = await Homestay.findById(req.params.homestayId);
+    const homestay = await Homestay.findById(homestayId);
 
     if (!homestay) {
         return next(
             new ErrorResponse(
-                `Không tìm thấy homestay với id ${req.params.homestayId}`,
+                `Không tìm thấy homestay với id ${homestayId}`,
                 404
             )
         );
     }
 
-    // Kiểm tra xem user đã review homestay này chưa (nếu cần)
-    // const existingReview = await Review.findOne({ homestay: req.params.homestayId, user: req.user.id });
-    // if (existingReview) {
-    //     return next(new ErrorResponse(`Bạn đã đánh giá homestay này rồi`, 400));
-    // }
+    // Kiểm tra xem user đã đặt phòng và thanh toán thành công chưa
+    const paidBooking = await Booking.findOne({
+        homestay: homestayId,
+        user: userId,
+        paymentStatus: 'paid',
+        bookingStatus: { $in: ['confirmed', 'completed','pending'] }
+    });
 
-    const review = await Review.create(req.body);
+    if (!paidBooking) {
+        return next(
+            new ErrorResponse(
+                `Bạn cần phải đặt phòng và thanh toán thành công trước khi đánh giá`,
+                403
+            )
+        );
+    }
 
+    // Create review first
+    const review = await Review.create({
+        homestay: homestayId,
+        user: userId,
+        text: textReview,
+        rating
+    });
+
+    // Send response first
     res.status(201).json({
         success: true,
         data: review
     });
+
+    // Call sentiment analysis API asynchronously
+    try {
+        const response = await fetch('https://sentiment-analysis-2yo7.onrender.com/api/sentiment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ comment: textReview })
+        });
+
+        const sentimentData = await response.json();
+
+        // Update review with sentiment data
+        await Review.findByIdAndUpdate(
+            review._id,
+            { sentiment: sentimentData.result.sentiment },
+            { runValidators: true }
+        );
+    } catch (error) {
+        console.error('Error getting sentiment analysis:', error);
+    }
 });
 
 // @desc    Cập nhật review
@@ -137,3 +178,4 @@ exports.deleteReview = asyncHandler(async (req, res, next) => {
         data: {}
     });
 });
+

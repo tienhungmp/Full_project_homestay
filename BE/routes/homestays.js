@@ -5,7 +5,8 @@ const {
   createHomestay,
   updateHomestay,
   deleteHomestay,
-  homestayPhotoUpload
+  homestayPhotoUpload,
+  getTopRatedHomestays
 } = require('../controllers/homestays');
 
 const Homestay = require('../models/Homestay'); // Cần cho advancedResults nếu dùng
@@ -29,13 +30,23 @@ router.use('/:homestayId/reviews', reviewRouter);
 
 router
   .route('/')
-  .get(advancedResults(Homestay, 'reviews'), getHomestays) // Sử dụng advancedResults, populate reviews
+  .get(advancedResults(Homestay,  {
+    path: 'reviews',
+    populate: {
+      path: 'user',
+      select: 'name avatar' 
+    }
+  }), getHomestays) // Sử dụng advancedResults, populate reviews
   .post(protect, authorize('host', 'admin'), createHomestay);
+
+
+router.get('/top-rated', getTopRatedHomestays);
 
 router
   .route('/:id')
   .get(getHomestay)
   .put(protect, authorize('host', 'admin'), updateHomestay)
   .delete(protect, authorize('host', 'admin'), deleteHomestay);
+
 
 module.exports = router;

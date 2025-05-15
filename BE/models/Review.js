@@ -4,8 +4,8 @@ const ReviewSchema = new mongoose.Schema({
   title: {
     type: String,
     trim: true,
-    required: [true, 'Vui lòng thêm tiêu đề cho đánh giá'],
-    maxlength: 100
+    maxlength: 100,
+    default: 'Đánh giá homestay'
   },
   text: {
     type: String,
@@ -30,64 +30,94 @@ const ReviewSchema = new mongoose.Schema({
     type: mongoose.Schema.ObjectId,
     ref: 'User',
     required: true
+  },
+  sentiment: {
+    type: String,
+    enum: ['positive', 'negative', 'neutral'],
+    default: 'neutral' 
   }
 });
 
-// Ngăn người dùng gửi nhiều hơn một đánh giá cho mỗi homestay
-ReviewSchema.index({ homestay: 1, user: 1 }, { unique: true });
-
-// Static method để tính rating trung bình và lưu
-ReviewSchema.statics.getAverageRating = async function(homestayId) {
+// Cập nhật điểm trung bình đánh giá
+ReviewSchema.statics.getAverageRating = async function (homestayId) {
   const obj = await this.aggregate([
     {
       $match: { homestay: homestayId }
     },
     {
+      $sort: { user: 1, createdAt: -1 }
+    },
+    {
       $group: {
-        _id: '$homestay',
-        averageRating: { $avg: '$rating' }
+        _id: '$user',
+        latestRating: { $first: '$rating' }
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        averageRating: { $avg: '$latestRating' }
       }
     }
   ]);
 
   try {
-    // Sử dụng this.model('Homestay') thay vì trực tiếp gọi Homestay
     await this.model('Homestay').findByIdAndUpdate(homestayId, {
-        // Nếu không có đánh giá nào, đặt averageRating là undefined hoặc 0 tùy logic
-        averageRating: obj[0] ? parseFloat(obj[0].averageRating.toFixed(1)) : undefined
+      averageRating: obj[0] ? parseFloat(obj[0].averageRating.toFixed(1)) : undefined
     });
   } catch (err) {
     console.error(`Lỗi khi cập nhật averageRating cho homestay ${homestayId}:`, err);
   }
 };
 
-// Gọi getAverageRating sau khi lưu
-ReviewSchema.post('save', async function() {
-  await this.constructor.getAverageRating(this.homestay);
+// Sau khi lưu review mới
+ReviewSchema.post('save', async function () {
+  const reviewId = this._id;
+  const homestayId = this.homestay;
+
+  // Push vào mảng reviews của Homestay
+  await this.model('Homestay').findByIdAndUpdate(homestayId, {
+    $addToSet: { reviews: reviewId }
+  });
+
+  // Cập nhật averageRating
+  await this.constructor.getAverageRating(homestayId);
 });
 
-// Gọi getAverageRating trước và sau khi cập nhật/xóa bằng findByIdAndUpdate/Delete
-ReviewSchema.pre(/^findOneAnd/, async function(next) {
-  // Lưu document hiện tại vào 'this._updateDoc' để truy cập trong post hook
-  // Dùng clone() để tránh lỗi khi thực thi query nhiều lần
+// Trước khi update/delete qua findOneAnd*
+ReviewSchema.pre(/^findOneAnd/, async function (next) {
   this._updateDoc = await this.model.findOne(this.getQuery()).clone();
   next();
 });
 
-ReviewSchema.post(/^findOneAnd/, async function() {
-  // this._updateDoc sẽ là document *trước* khi update/delete
+// Sau khi update/delete qua findOneAnd*
+ReviewSchema.post(/^findOneAnd/, async function () {
   if (this._updateDoc) {
-      await this._updateDoc.constructor.getAverageRating(this._updateDoc.homestay);
+    const homestayId = this._updateDoc.homestay;
+
+    // Pull nếu bị xóa
+    if (this.op === 'findOneAndDelete' || this.op === 'findOneAndRemove') {
+      await this.model('Homestay').findByIdAndUpdate(homestayId, {
+        $pull: { reviews: this._updateDoc._id }
+      });
+    }
+
+    // Cập nhật điểm đánh giá
+    await this._updateDoc.constructor.getAverageRating(homestayId);
   }
-  // Nếu là update, cần chạy lại cho document *sau* khi update (nếu rating thay đổi)
-  // Tuy nhiên, hook post('save') đã xử lý trường hợp tạo mới và cập nhật thông thường.
-  // Logic này chủ yếu để xử lý khi xóa hoặc khi rating thay đổi qua findByIdAndUpdate.
 });
 
-// Xử lý khi xóa bằng document.remove() (ít dùng hơn findByIdAndDelete)
-ReviewSchema.post('remove', async function() {
-    await this.constructor.getAverageRating(this.homestay);
-});
+// Khi xóa bằng document.remove()
+ReviewSchema.post('remove', async function () {
+  const homestayId = this.homestay;
 
+  // Xoá review khỏi Homestay
+  await this.model('Homestay').findByIdAndUpdate(homestayId, {
+    $pull: { reviews: this._id }
+  });
+
+  // Cập nhật lại averageRating
+  await this.constructor.getAverageRating(homestayId);
+});
 
 module.exports = mongoose.model('Review', ReviewSchema);

@@ -76,7 +76,7 @@ const BookingForm = ({ price, rating, maxGuests, propertyId, propertyName }: Boo
     // Create the booking request
     const bookingData: OrderRequest = {
       userId: user._id,
-      propertyId: "6812ac80eebbfcfb29cc2468",
+      propertyId,
       checkIn,
       checkOut,
       guestCount,

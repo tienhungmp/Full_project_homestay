@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Shield } from "lucide-react";
@@ -19,6 +18,8 @@ const Admin = () => {
     localStorage.setItem("adminRedirect", "true");
     navigate("/login");
   };
+
+  console.log(user?.role)
 
   // Using the role-based access control
   if (isAuthenticated && user && user.role !== 'admin') {

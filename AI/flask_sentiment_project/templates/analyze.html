@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Phân Tích Cảm Xúc</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        
+        :root {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --accent: #f72585;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --positive: #06d6a0;
+            --neutral: #ffd166;
+            --negative: #ef476f;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            max-width: 900px;
+            width: 90%;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 30px;
+            font-size: 2.2rem;
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 15px;
+        }
+        
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 2px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--secondary);
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            min-height: 150px;
+            transition: border-color 0.3s ease;
+            resize: vertical;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+        
+        button {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 14px rgba(0, 0, 0, 0.1);
+        }
+        
+        button:active {
+            transform: translateY(-1px);
+        }
+        
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            display: none;
+        }
+        
+        .result.positive {
+            background-color: rgba(6, 214, 160, 0.1);
+            border: 2px solid var(--positive);
+        }
+        
+        .result.neutral {
+            background-color: rgba(255, 209, 102, 0.1);
+            border: 2px solid var(--neutral);
+        }
+        
+        .result.negative {
+            background-color: rgba(239, 71, 111, 0.1);
+            border: 2px solid var(--negative);
+        }
+        
+        .result-emoji {
+            font-size: 4rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .result-text {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .result-score {
+            font-size: 1.1rem;
+            color: #666;
+        }
+        
+        .home-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .home-link:hover {
+            color: var(--accent);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-left-color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Phân Tích Cảm Xúc Bình Luận</h1>
+        
+        <form id="sentiment-form">
+            <div class="form-group">
+                <label for="comment">Nhập bình luận cần phân tích:</label>
+                <textarea id="comment" name="comment" placeholder="Nhập văn bản bình luận ở đây..." required></textarea>
+            </div>
+            
+            <button type="submit">Phân Tích</button>
+        </form>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Đang phân tích...</p>
+        </div>
+        
+        <div class="result" id="result">
+            <span class="result-emoji" id="result-emoji"></span>
+            <div class="result-text" id="result-text"></div>
+            <div class="result-score" id="result-score"></div>
+        </div>
+        
+        <a href="/" class="home-link">← Quay lại trang chủ</a>
+    </div>
+    
+    <script>
+        document.getElementById('sentiment-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const comment = document.getElementById('comment').value;
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            
+            // Hide previous results and show loading
+            result.style.display = 'none';
+            loading.style.display = 'block';
+            
+            try {
+                // Send the comment to the API
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: comment })
+                });
+                
+                const data = await response.json();
+                
+                // Hide loading
+                loading.style.display = 'none';
+                
+                // Display the result
+                const resultEmoji = document.getElementById('result-emoji');
+                const resultText = document.getElementById('result-text');
+                const resultScore = document.getElementById('result-score');
+                
+                // Remove previous classes
+                result.classList.remove('positive', 'neutral', 'negative');
+                
+                // Set appropriate class and content based on sentiment
+                if (data.sentiment === 'positive') {
+                    result.classList.add('positive');
+                    resultEmoji.textContent = '😊';
+                    resultText.textContent = 'Bình luận Tích Cực';
+                } else if (data.sentiment === 'neutral') {
+                    result.classList.add('neutral');
+                    resultEmoji.textContent = '😐';
+                    resultText.textContent = 'Bình luận Trung Tính';
+                } else {
+                    result.classList.add('negative');
+                    resultEmoji.textContent = '😠';
+                    resultText.textContent = 'Bình luận Tiêu Cực';
+                }
+                
+                resultScore.textContent = `Độ tin cậy: ${data.confidence}%`;
+                result.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error:', error);
+                loading.style.display = 'none';
+                alert('Có lỗi xảy ra khi phân tích. Vui lòng thử lại sau.');
+            }
+        });
+    </script>
+</body>
+</html>

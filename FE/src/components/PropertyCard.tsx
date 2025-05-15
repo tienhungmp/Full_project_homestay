@@ -4,14 +4,15 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, MapPin } from "lucide-react";
+import { console } from 'inspector';
 
 interface PropertyCardProps {
   _id: string;
   name: string;
   address: string;
   price: number;
-  rating: number;
-  image: string;
+  averageRating: number;
+  images: string;
   type: string;
 }
 
@@ -20,16 +21,17 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   name,
   address,
   price,
-  rating,
-  image,
+  averageRating,
+  images,
   type
 }) => {
+
   return (
     <Link to={`/property/${_id}`}>
       <Card className="property-card overflow-hidden h-full">
         <div className="relative">
           <img 
-            src={'http://localhost:5000/'+ image} 
+            src={'http://localhost:5000/'+ images[0]} 
             alt={name} 
             className="w-full h-48 object-cover"
           />
@@ -44,7 +46,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
             <h3 className="font-semibold text-lg line-clamp-2">{name}</h3>
             <div className="flex items-center">
               <Star className="h-4 w-4 fill-brand-yellow text-brand-yellow" />
-              {/* <span className="text-sm font-medium ml-1">{rating.toFixed(1)}</span> */}
+              <span className="text-sm font-medium ml-1">{averageRating.toFixed(1)}</span>
             </div>
           </div>
           <div className="flex items-center mt-2 text-muted-foreground">

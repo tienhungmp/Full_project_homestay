@@ -59,7 +59,7 @@ export const useGetOrderById = () => {
     const getOrderById = async (orderId: string) => {
       const response = await fetchData<any>(`/bookings/${orderId}`);
       if (response.success && response.data) {
-        console.log(response.data)
+        console.log(response)
         setOrder(response.data);
       }
       return response;

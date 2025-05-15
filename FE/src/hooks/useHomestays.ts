@@ -2,6 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useApi } from './useApi';
 import { Property } from '@/types/property';
+import { useState } from 'react';
 
 interface FilterParams {
   location?: string;
@@ -43,4 +44,48 @@ export const useHomestays = (
       return response.data;
     },
   });
+};
+
+
+export const useGetHomestayById = () => {
+  const { fetchData, isLoading, error } = useApi();
+  const [homestay, setHomestay] = useState<any | null>(null);
+
+  const getHomestayById = async (orderId: string) => {
+    const response = await fetchData<any>(`/homestays/${orderId}`);
+    if (response.success && response.data) {
+      console.log(response.data)
+      setHomestay(response.data.data);
+    }
+    return response;
+  };
+
+  return {
+    getHomestayById,
+    homestay,
+    isLoading,
+    error,
+  };
+};
+
+
+export const useGetHomestayTopRate = () => {
+  const { fetchData, isLoading, error } = useApi();
+  const [homestays, setHomestays] = useState<any | null>(null);
+
+  const getHomestayTopRate = async () => {
+    const response = await fetchData<any>(`/homestays/top-rated`);
+    if (response.success && response.data) {
+      console.log(response.data)
+      setHomestays(response.data.data);
+    }
+    return response;
+  };
+
+  return {
+    getHomestayTopRate,
+    homestays,
+    isLoading,
+    error,
+  };
 };
