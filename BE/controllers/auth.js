@@ -33,10 +33,10 @@ const generateRefreshToken = async (userId) => {
 // @route   POST /api/auth/register
 // @access  Public
 exports.register = asyncHandler(async (req, res, next) => {
-  const { name, email, password, confirm_password, role } = req.body;
+  const { name, email, password, confirmPassword, role } = req.body;
   
   // Check if passwords match
-  if (password !== confirm_password) {
+  if (password !== confirmPassword) {
     return next(new ErrorResponse('Mật khẩu xác nhận không khớp', 400));
   }
 

@@ -310,3 +310,140 @@ exports.deleteBooking = asyncHandler(async (req, res, next) => {
         data: {}
     });
 });
+
+// @desc    Get revenue statistics
+// @route   GET /api/bookings/revenue
+// @access  Private (Admin)
+exports.getRevenue = asyncHandler(async (req, res, next) => {
+    const { periodType, count } = req.query;
+    
+    // Only admin can access revenue data
+    if (req.user.role !== 'admin') {
+        return next(new ErrorResponse('Not authorized to access revenue data', 403));
+    }
+
+    let startDate = new Date();
+    let groupFormat;
+    
+    // Set date range based on period type
+    switch(periodType) {
+        case 'day':
+            startDate.setDate(startDate.getDate() - count);
+            groupFormat = { $dateToString: { format: "%Y-%m-%d", date: "$checkInDate" } };
+            break;
+        case 'month':
+            startDate.setMonth(startDate.getMonth() - count);
+            groupFormat = { $dateToString: { format: "%Y-%m", date: "$checkInDate" } };
+            break;
+        case 'year':
+            startDate.setFullYear(startDate.getFullYear() - count);
+            groupFormat = { $dateToString: { format: "%Y", date: "$checkInDate" } };
+            break;
+        default:
+            return next(new ErrorResponse('Invalid period type. Use day, month, or year', 400));
+    }
+
+    const revenue = await Booking.aggregate([
+        {
+            $match: {
+                checkInDate: { $gte: startDate },
+                paymentStatus: 'paid'
+            }
+        },
+        {
+            $group: {
+                _id: groupFormat,
+                revenue: { $sum: "$totalPrice" }
+            }
+        },
+        {
+            $project: {
+                _id: 0,
+                date: "$_id",
+                revenue: 1,
+                name: "$_id"
+            }
+        },
+        {
+            $sort: { date: 1 }
+        }
+    ]);
+
+    res.status(200).json({
+        success: true,
+        count: revenue.length,
+        data: revenue
+    });
+});
+
+
+// @desc    Get revenue statistics for host
+// @route   GET /api/bookings/host-revenue
+// @access  Private (Host)
+exports.getHostRevenue = asyncHandler(async (req, res, next) => {
+    const { periodType, count, hostId} = req.query;
+    
+    if (!hostId) {
+        return next(new ErrorResponse('Host ID is required', 400));
+    }
+
+    let startDate = new Date();
+    let groupFormat;
+    
+    // Set date range based on period type
+    switch(periodType) {
+        case 'day':
+            startDate.setDate(startDate.getDate() - count);
+            groupFormat = { $dateToString: { format: "%Y-%m-%d", date: "$checkInDate" } };
+            break;
+        case 'month':
+            startDate.setMonth(startDate.getMonth() - count);
+            groupFormat = { $dateToString: { format: "%Y-%m", date: "$checkInDate" } };
+            break;
+        case 'year':
+            startDate.setFullYear(startDate.getFullYear() - count);
+            groupFormat = { $dateToString: { format: "%Y", date: "$checkInDate" } };
+            break;
+        default:
+            return next(new ErrorResponse('Invalid period type. Use day, month, or year', 400));
+    }
+
+    // Get all homestays owned by the specified host
+    const hostHomestays = await Homestay.find({ host: hostId }).select('_id');
+    const hostHomestayIds = hostHomestays.map(h => h._id);
+
+    const revenue = await Booking.aggregate([
+        {
+            $match: {
+                checkInDate: { $gte: startDate },
+                paymentStatus: 'paid',
+                homestay: { $in: hostHomestayIds }
+            }
+        },
+        {
+            $group: {
+                _id: groupFormat,
+                revenue: { $sum: "$totalPrice" }
+            }
+        },
+        {
+            $project: {
+                _id: 0,
+                date: "$_id",
+                revenue: 1,
+                name: "$_id"
+            }
+        },
+        {
+            $sort: { date: 1 }
+        }
+    ]);
+
+    res.status(200).json({
+        success: true,
+        count: revenue.length,
+        data: revenue
+    });
+});
+
+

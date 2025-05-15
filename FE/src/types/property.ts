@@ -19,3 +19,11 @@ export interface Review {
   content: string;
   sentiment?: 'positive' | 'negative' | 'neutral';
 }
+
+export interface RevenueDataPoint {
+  name: string;
+  revenue: number;
+  date?: Date;
+}
+
+export type PeriodType = 'day' | 'month' | 'year';

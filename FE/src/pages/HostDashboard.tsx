@@ -50,18 +50,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  BarChart as RechartsBarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-} from "recharts";
+
 import { toast } from "sonner";
+import RevenueChart from "@/components/dashboard/RevenueChart";
 import { Review } from "@/types/property";
 
 // Sample data
@@ -110,7 +101,7 @@ const HostDashboard = () => {
   const [bookingSearchQuery, setBookingSearchQuery] = useState("");
   const [bookingStatus, setBookingStatus] = useState("");
   const [selectedProperty, setSelectedProperty] = useState<string | null>(null);
-
+  console.log(user);
   // Handle property operations
   const handleAddProperty = () => {
     toast.success("Thêm chỗ nghỉ mới");
@@ -266,34 +257,7 @@ const HostDashboard = () => {
                 </Card>
               </div>
 
-              <Card className="mb-8">
-                <CardHeader>
-                  <CardTitle>Doanh thu theo tháng (Triệu VND)</CardTitle>
-                  <CardDescription>Biểu đồ doanh thu theo tháng trong năm 2023</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-80 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart
-                        data={revenueData}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip formatter={(value: number) => [`${value/1000}M VND`, 'Doanh thu']} />
-                        <Line 
-                          type="monotone" 
-                          dataKey="revenue" 
-                          stroke="#4f46e5" 
-                          strokeWidth={2}
-                          activeDot={{ r: 8 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
+              <RevenueChart _idHost={user?._id}/>
             </TabsContent>
 
             {/* Properties Content */}

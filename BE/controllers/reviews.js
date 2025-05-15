@@ -179,3 +179,36 @@ exports.deleteReview = asyncHandler(async (req, res, next) => {
     });
 });
 
+
+// @desc    Get all reviews by host ID
+// @route   GET /api/hosts/:hostId/reviews
+// @access  Public
+exports.getReviewsByHost = asyncHandler(async (req, res, next) => {
+    // Find all homestays belonging to the host from query
+    const homestays = await Homestay.find({ host: req.query.hostId });
+    
+    // Get all homestay IDs
+    const homestayIds = homestays.map(homestay => homestay._id);
+
+    // Find all reviews for these homestays and sort by createdAt in descending order
+    const reviews = await Review.find({ 
+        homestay: { $in: homestayIds } 
+    })
+    .sort({ createdAt: -1 }) // Sort reviews from newest to oldest
+    .populate([
+        {
+            path: 'homestay',
+            select: 'name averageRating'
+        },
+        {
+            path: 'user',
+            select: 'name'
+        }
+    ]);
+
+    res.status(200).json({
+        success: true,
+        count: reviews.length,
+        data: reviews
+    });
+});

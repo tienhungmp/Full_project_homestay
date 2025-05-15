@@ -4,7 +4,8 @@ const {
   getReview,
   addReview,
   updateReview,
-  deleteReview
+  deleteReview,
+  getReviewsByHost
 } = require('../controllers/reviews'); // Sẽ tạo file này sau
 
 const Review = require('../models/Review');
@@ -22,6 +23,10 @@ router
     select: 'name description'
   }), getReviews)
   .post(protect, authorize('user', 'admin'), addReview);
+
+router
+ .route('/getReviewByHostId')
+ .get(protect,authorize('host'),getReviewsByHost)
 
 router
   .route('/:id')
