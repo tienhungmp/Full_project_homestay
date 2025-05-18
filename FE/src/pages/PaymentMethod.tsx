@@ -8,8 +8,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
+
 // Payment method icons
-import { CreditCard, Wallet, Bitcoin } from 'lucide-react';
+import { CreditCard, Wallet, Bitcoin, User, MapPin, Phone } from 'lucide-react';
 import { useCreatePaymentUrl } from '@/hooks/useOrder';
 
 interface BookingDetails {
@@ -20,6 +21,11 @@ interface BookingDetails {
   checkOut: string;
   guestCount: number;
   totalPrice: number;
+  guestInfo?: {
+    username: string;
+    address: string;
+    phoneNumber: string;
+  };
 }
 
 const PaymentMethod = () => {
@@ -40,7 +46,7 @@ const PaymentMethod = () => {
         <main className="flex-1 container py-16 text-center">
           <h1 className="text-2xl font-bold mb-4">Có lỗi xảy ra</h1>
           <p className="mb-6">Không tìm thấy thông tin đặt phòng.</p>
-          <Button onClick={() => navigate(-1)}>Quay lại</Button>
+          <Button onClick={() => navigate("/")}>Quay lại</Button>
         </main>
         <Footer />
       </div>
@@ -49,30 +55,23 @@ const PaymentMethod = () => {
   
   const handlePaymentSubmit = async () => {
     setIsProcessing(true);
-    if (selectedMethod !== 'e_wallet') {
-      toast.error('Hiện tại chỉ hỗ trợ thanh toán qua Ví điện tử');
-      setIsProcessing(false);
-      return;
-    }
-    
     try {
-      const paymentMethodNames: Record<string, string> = {
-        credit_card: 'Thẻ tín dụng/ghi nợ',
-        e_wallet: 'Ví điện tử',
-        crypto: 'Tiền điện tử'
-      };
+      if (selectedMethod !== 'e_wallet') {
+        throw new Error('Hiện tại chỉ hỗ trợ thanh toán qua Ví điện tử');
+      }
       const response = await createPaymentUrl({
         orderId: bookingDetails.orderId,
         totalPrice: bookingDetails.totalPrice,
       });
 
-
-      if(response.success){
-        window.location.href =  response.data.data.toString();
+      if (response.success) {
+        window.location.href = response.data.data.toString();
+      } else {
+        navigate('/');
       }
-
     } catch (error) {
-      toast.error('Có lỗi xảy ra khi xử lý thanh toán');
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra khi xử lý thanh toán');
+    } finally {
       setIsProcessing(false);
     }
   };
@@ -102,6 +101,30 @@ const PaymentMethod = () => {
                     </div>
                   </div>
                 </div>
+
+                {bookingDetails.guestInfo && (
+                  <div className="mb-6 p-4 bg-muted rounded-lg">
+                    <h3 className="font-semibold mb-2 flex items-center">
+                      <User className="h-4 w-4 mr-1" /> Thông tin người đặt
+                    </h3>
+                    <div className="space-y-1 text-sm">
+                      <p className="flex items-center">
+                        <span className="font-medium mr-2">Tên:</span>
+                        {bookingDetails.guestInfo.username}
+                      </p>
+                      <p className="flex items-center">
+                        <MapPin className="h-3 w-3 mr-1" />
+                        <span className="font-medium mr-2">Địa chỉ:</span>
+                        {bookingDetails.guestInfo.address}
+                      </p>
+                      <p className="flex items-center">
+                        <Phone className="h-3 w-3 mr-1" />
+                        <span className="font-medium mr-2">Số điện thoại:</span>
+                        {bookingDetails.guestInfo.phoneNumber}
+                      </p>
+                    </div>
+                  </div>
+                )}
                 
                 <div>
                   <h2 className="text-lg font-semibold mb-4">Phương thức thanh toán</h2>

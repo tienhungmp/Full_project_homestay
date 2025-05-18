@@ -9,6 +9,8 @@ const {
   createPayment,
   paymentSuccess,
   getHostRevenue,
+  createBookingWithoutAccount,
+  getHostDashboard
 } = require("../controllers/bookings"); // Sẽ tạo file này sau
 
 const Booking = require("../models/Booking");
@@ -32,20 +34,25 @@ router
   ) // Sử dụng advancedResults và protect
   .post(protect, authorize("user"), createBooking); // Chỉ user mới tạo được booking
 
+router.route("/host-dashboard").get(protect, authorize("host"), getHostDashboard);
+
+router 
+ .route("/create-booking-without-account").post(createBookingWithoutAccount)
+
 router
   .route("/payment-success")
-  .put(protect, authorize("user"), paymentSuccess);
+  .put(paymentSuccess);
+
+// Payment route handlers
+router.route("/create-payment").post(createPayment);
 
 router.route("/host-revenue").get(protect,authorize("host"),getHostRevenue);
 
 // Individual booking route handlers
 router
   .route("/:id")
-  .get(protect, getBooking) // Chỉ user liên quan hoặc host/admin mới xem được
+  .get(getBooking)
   .put(protect, authorize("user", "admin"), updateBooking) // Chỉ user tạo hoặc admin mới sửa được
   .delete(protect, authorize("user", "admin"), deleteBooking); // Chỉ user tạo hoặc admin mới xóa được
-
-// Payment route handlers
-router.route("/create-payment").post(protect, authorize("user"), createPayment);
 
 module.exports = router;

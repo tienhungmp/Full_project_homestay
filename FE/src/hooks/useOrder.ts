@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useApi } from './useApi';
-import { Order, OrderRequest } from '@/types/order';
+import { BookingRequest, Order, OrderRequest } from '@/types/order';
 import { useState } from 'react';
 
 /**
@@ -16,6 +16,23 @@ export const useOrder = () => {
 
   return {
     createOrder,
+    isLoading,
+    error,
+  };
+};
+
+
+
+export const useOrderWithoutAccount = () => {
+  const { createData, isLoading, error } = useApi();
+
+  const createOrderWithoutAccount = async (bookingData: BookingRequest) => {
+    const response = await createData<any>('/bookings/create-booking-without-account', bookingData);
+    return response;
+  };
+
+  return {
+    createOrderWithoutAccount,
     isLoading,
     error,
   };
@@ -68,6 +85,22 @@ export const useGetOrderById = () => {
     return {
       getOrderById,
       order,
+      isLoading,
+      error,
+    };
+  };
+
+
+  export const useGetInfoHostDashboard = () => {
+    const { fetchData, isLoading, error } = useApi();
+  
+    const getGetInfoHostDashboard = async () => {
+      const response = await fetchData<any>(`/bookings/host-dashboard`);
+      return response;
+    };
+  
+    return {
+      getGetInfoHostDashboard,
       isLoading,
       error,
     };

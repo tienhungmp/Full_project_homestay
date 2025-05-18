@@ -26,7 +26,6 @@ export const apiRequest = async <T>(
 
     // 2. Thêm access token vào headers
     const storedTokens = localStorage.getItem('auth_tokens');
-    console.log('Stored Tokens:', storedTokens);
     if (storedTokens) {
       const { accessToken } = JSON.parse(storedTokens);
       config.headers = {

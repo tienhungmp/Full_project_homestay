@@ -8,8 +8,9 @@ import { useAuth } from '@/contexts/auth/useAuth';
 import { useApi } from '@/hooks/useApi';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useOrder } from '@/hooks/useOrder';
-import { OrderRequest } from '@/types/order';
+import { useOrder, useOrderWithoutAccount } from '@/hooks/useOrder';
+import { BookingRequest, OrderRequest } from '@/types/order';
+import BookingInfoModal, { BookingInfoFormValues } from './BookingInfoModal';
 
 interface BookingFormProps {
   price: number;
@@ -24,9 +25,13 @@ const BookingForm = ({ price, rating, maxGuests, propertyId, propertyName }: Boo
   const [checkOut, setCheckOut] = useState<Date | undefined>(undefined);
   const [guestCount, setGuestCount] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showGuestInfoModal, setShowGuestInfoModal] = useState(false);
+  const [guestInfo, setGuestInfo] = useState<BookingInfoFormValues | null>(null);
+  
   
   const { isAuthenticated, user } = useAuth();
   const { createOrder, isLoading, error } = useOrder();
+  const {createOrderWithoutAccount} =  useOrderWithoutAccount();
   const navigate = useNavigate();
 
   
@@ -53,6 +58,51 @@ const BookingForm = ({ price, rating, maxGuests, propertyId, propertyName }: Boo
     }
   };
 
+  // Handle guest info modal submission
+  const handleGuestInfoSubmit =  async (data: BookingInfoFormValues) => {
+    setGuestInfo(data);
+    setShowGuestInfoModal(false);
+
+    const bookingData: BookingRequest = {
+      propertyId,
+      checkIn,
+      checkOut,
+      guestCount,
+      totalPrice,
+      bookingStatus: 'pending',
+      paymentStatus: 'pending',
+      guestName: data.username,
+      guestEmail: data.email,
+      guestPhone: data.phoneNumber,
+      guestAddress: data.address
+    };
+
+    try {
+      const response = await createOrderWithoutAccount(bookingData)
+      if(response.success){
+        navigate('/payment-method', {
+          state: {
+            bookingDetails: {
+              propertyId,
+              propertyName,
+              checkIn: format(checkIn!, 'dd/MM/yyyy'),
+              checkOut: format(checkOut!, 'dd/MM/yyyy'),
+              guestCount,
+              totalPrice,
+              guestInfo: data,
+              orderId: response.data.data._id
+            }
+          }
+        });
+      } else {
+        toast.error(response.error || 'Có lỗi xảy ra khi đặt phòng. Vui lòng thử lại sau.');
+      }
+    } catch (error) {
+      toast.error(error || 'Có lỗi xảy ra khi đặt phòng. Vui lòng thử lại sau.');
+    }
+  };
+
+
   // Handle booking submission
   const handleBookingSubmit = async () => {
     if (!checkIn || !checkOut) {
@@ -62,12 +112,13 @@ const BookingForm = ({ price, rating, maxGuests, propertyId, propertyName }: Boo
 
     // If not authenticated, redirect to login
     if (!isAuthenticated) {
-      toast.info('Vui lòng đăng nhập để đặt phòng', {
-        action: {
-          label: 'Đăng nhập',
-          onClick: () => navigate('/login', { state: { from: `/property/${propertyId}` } })
-        }
-      });
+      // toast.info('Vui lòng đăng nhập để đặt phòng', {
+      //   action: {
+      //     label: 'Đăng nhập',
+      //     onClick: () => navigate('/login', { state: { from: `/property/${propertyId}` } })
+      //   }
+      // });
+      setShowGuestInfoModal(true);
       return;
     }
 
@@ -84,7 +135,6 @@ const BookingForm = ({ price, rating, maxGuests, propertyId, propertyName }: Boo
       bookingStatus: 'pending',
       paymentStatus: 'pending',
     };
-    console.log(bookingData); // Log the booking data to the conso
 
     try {
       // const response = await createData('/api/bookings', bookingData);
@@ -246,6 +296,12 @@ const BookingForm = ({ price, rating, maxGuests, propertyId, propertyName }: Boo
           </div>
         )}
       </div>
+      {/* Guest information modal for non-authenticated users */}
+      <BookingInfoModal
+        open={showGuestInfoModal}
+        onClose={() => setShowGuestInfoModal(false)}
+        onSubmit={handleGuestInfoSubmit}
+      />
     </div>
   );
 };

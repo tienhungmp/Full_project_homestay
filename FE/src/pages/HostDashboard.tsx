@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -54,6 +54,8 @@ import {
 import { toast } from "sonner";
 import RevenueChart from "@/components/dashboard/RevenueChart";
 import { Review } from "@/types/property";
+import { useGetReviewsByHostId } from "@/hooks/useReviews";
+import { useGetInfoHostDashboard } from "@/hooks/useOrder";
 
 // Sample data
 const revenueData = [
@@ -100,8 +102,12 @@ const HostDashboard = () => {
   const [propertySearchQuery, setPropertySearchQuery] = useState("");
   const [bookingSearchQuery, setBookingSearchQuery] = useState("");
   const [bookingStatus, setBookingStatus] = useState("");
-  const [selectedProperty, setSelectedProperty] = useState<string | null>(null);
-  console.log(user);
+  const [selectedProperty, setSelectedProperty] = useState<{id: string, name: string}>(null);
+  const [reviewsUser, setReviewsUser] = useState<any[]>();
+  const [homestayReviews, setHomestayReviews] = useState<any[]>([]);
+  const [infoHostDashboard, setInfoHostDashboard] = useState<any>();  
+  const {getGetReviewsByHostId} =  useGetReviewsByHostId()
+  const {getGetInfoHostDashboard} =  useGetInfoHostDashboard();
   // Handle property operations
   const handleAddProperty = () => {
     toast.success("Thêm chỗ nghỉ mới");
@@ -129,7 +135,7 @@ const HostDashboard = () => {
   };
 
   // Handle showing reviews for a specific property
-  const handleShowPropertyReviews = (propertyName: string) => {
+  const handleShowPropertyReviews = (propertyName: {id:string, name:string}) => {
     setSelectedProperty(propertyName);
   };
 
@@ -164,9 +170,20 @@ const HostDashboard = () => {
 
   // Filter reviews based on selected property
   const filteredReviews = selectedProperty 
-    ? reviews.filter(review => review.property === selectedProperty)
-    : reviews;
-
+    ? reviewsUser.filter(review => review.homestay._id === selectedProperty.id)
+    : reviewsUser;
+  useEffect(() => {
+    const fetchData = async () => {
+      const responseReviews = await getGetReviewsByHostId();
+      const responseInfoHostDashboard = await getGetInfoHostDashboard();
+      if(responseReviews.success && responseInfoHostDashboard.success) {
+        setReviewsUser(responseReviews.data.data);
+        setInfoHostDashboard(responseInfoHostDashboard.data.data);
+        setHomestayReviews(responseReviews.data.homestays);
+      }
+    };
+    fetchData();
+  }, [])
   return (
     <ProtectedRoute allowedRoles={['host', 'admin']}>
       <div className="min-h-screen flex flex-col">
@@ -218,7 +235,7 @@ const HostDashboard = () => {
                     <Home className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">3</div>
+                    <div className="text-2xl font-bold">{infoHostDashboard && infoHostDashboard.totalHomestays}</div>
                     <p className="text-xs text-muted-foreground">+1 so với tháng trước</p>
                   </CardContent>
                 </Card>
@@ -229,7 +246,7 @@ const HostDashboard = () => {
                     <Package className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">24</div>
+                    <div className="text-2xl font-bold">{infoHostDashboard && infoHostDashboard.monthlyBookings}</div>
                     <p className="text-xs text-muted-foreground">+8% so với tháng trước</p>
                   </CardContent>
                 </Card>
@@ -240,7 +257,7 @@ const HostDashboard = () => {
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">42.5M VND</div>
+                    <div className="text-2xl font-bold">{infoHostDashboard && infoHostDashboard.monthlyRevenue?.toLocaleString('vi-VN')} VNĐ</div>
                     <p className="text-xs text-muted-foreground">+12% so với tháng trước</p>
                   </CardContent>
                 </Card>
@@ -251,7 +268,7 @@ const HostDashboard = () => {
                     <Star className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">4.2</div>
+                    <div className="text-2xl font-bold">{infoHostDashboard && Number(infoHostDashboard.averageRating.averageRating).toFixed(2)}</div>
                     <p className="text-xs text-muted-foreground">+0.3 so với tháng trước</p>
                   </CardContent>
                 </Card>
@@ -501,14 +518,14 @@ const HostDashboard = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {filteredReviews.length > 0 ? (
+                  {filteredReviews && filteredReviews.length > 0 ? (
                     <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2">
                       {filteredReviews.map((review) => (
-                        <div key={review.id} className="bg-gray-50 rounded-lg p-4">
+                        <div key={review._id} className="bg-gray-50 rounded-lg p-4">
                           <div className="flex justify-between items-start mb-2">
                             <div>
                               <h3 className="font-medium">{review.guest}</h3>
-                              <p className="text-sm text-gray-500">{review.date} - {review.property}</p>
+                              <p className="text-sm text-gray-500">{new Date(review.createdAt).toLocaleDateString('vi-VN')}, {new Date(review.createdAt).toLocaleTimeString('vi-VN')} - {review.homestay.name}</p>
                             </div>
                             <div className="flex items-center gap-2">
                               <div className="flex items-center bg-white px-2 py-1 rounded-full">
@@ -521,7 +538,7 @@ const HostDashboard = () => {
                               </div>
                             </div>
                           </div>
-                          <p className="text-gray-600">{review.content}</p>
+                          <p className="text-gray-600">{review.text}</p>
                         </div>
                       ))}
                     </div>
@@ -546,7 +563,7 @@ const HostDashboard = () => {
                       <CardTitle>Thống kê đánh giá</CardTitle>
                       <CardDescription>
                         {selectedProperty 
-                          ? `Đánh giá cho ${selectedProperty}` 
+                          ? `Đánh giá cho ${selectedProperty.name}` 
                           : 'Trung bình đánh giá theo từng chỗ nghỉ'}
                       </CardDescription>
                     </div>
@@ -559,15 +576,15 @@ const HostDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {properties.map((property) => (
+                    {homestayReviews && homestayReviews.map((homestay) => (
                       <div 
-                        key={property.id} 
+                        key={homestay._id} 
                         className="flex justify-between items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer"
-                        onClick={() => handleShowPropertyReviews(property.name)}
+                        onClick={() => handleShowPropertyReviews({ id: homestay._id, name: homestay.name})}
                       >
                         <div>
-                          <h3 className="font-medium">{property.name}</h3>
-                          <p className="text-sm text-gray-500">{property.location}</p>
+                          <h3 className="font-medium">{homestay.name}</h3>
+                          <p className="text-sm text-gray-500">{homestay.address}</p>
                         </div>
                         <div className="flex items-center bg-white px-3 py-1 rounded-full">
                           <span className="mr-1 font-medium">4.{Math.floor(Math.random() * 9) + 1}</span>

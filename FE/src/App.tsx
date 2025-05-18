@@ -55,14 +55,10 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/payment-method" element={
-              <ProtectedRoute>
                 <PaymentMethod />
-              </ProtectedRoute>
             } />
             <Route path="/payment-success" element={
-              <ProtectedRoute>
                 <PaymentSuccess />
-              </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />
           </Routes>

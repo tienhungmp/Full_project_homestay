@@ -4,7 +4,7 @@ const BookingSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.ObjectId,
     ref: 'User',
-    required: true,
+    required: false,
   },
   homestay: {
     type: mongoose.Schema.ObjectId,
@@ -38,7 +38,30 @@ const BookingSchema = new mongoose.Schema({
     enum: ['pending', 'confirmed', 'cancelled', 'completed'],
     default: 'pending',
   },
-  // Thêm thông tin thanh toán nếu cần (paymentIntentId, paymentMethod, etc.)
+  guestName: {
+    type: String,
+    required: function () {
+      return !this.user;
+    },
+  },
+  guestEmail: {
+    type: String,
+    required: function () {
+      return !this.user;
+    },
+  },
+  guestPhone: {
+    type: String,
+    required: function () {
+      return !this.user;
+    },
+  },
+  guestAddress: {
+    type: String,
+    required: function () {
+      return !this.user;
+    },
+  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -53,5 +76,20 @@ BookingSchema.pre('validate', function(next) {
     next();
   }
 });
+
+BookingSchema.virtual('createdAtFormatted').get(function () {
+  return this.createdAt?.toLocaleString('vi-VN', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+});
+
+BookingSchema.set('toJSON', { virtuals: true });
+BookingSchema.set('toObject', { virtuals: true });
 
 module.exports = mongoose.model('Booking', BookingSchema);

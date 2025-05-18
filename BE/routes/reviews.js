@@ -26,7 +26,7 @@ router
 
 router
  .route('/getReviewByHostId')
- .get(protect,authorize('host'),getReviewsByHost)
+ .get(protect, authorize("host") ,getReviewsByHost)
 
 router
   .route('/:id')

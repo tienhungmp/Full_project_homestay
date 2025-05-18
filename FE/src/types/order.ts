@@ -21,3 +21,17 @@ export interface OrderRequest {
     status: 'pending' | 'confirmed' | 'cancelled';
     createdAt: string;
   }
+
+  export interface BookingRequest {
+      propertyId: string;
+      checkIn: Date;
+      checkOut: Date;
+      guestCount: number;
+      totalPrice: number;
+      bookingStatus: string;
+      paymentStatus: string;
+      guestName: string;
+      guestEmail: string;
+      guestPhone: string;
+      guestAddress: string;
+  }

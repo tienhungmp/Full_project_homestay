@@ -1,4 +1,6 @@
+import { useQuery } from "@tanstack/react-query";
 import { useApi } from "./useApi";
+import { useState } from "react";
 
 
 
@@ -16,3 +18,19 @@ export const useCreateReviewUser  = () => {
         error,
       };
 }
+
+
+export const useGetReviewsByHostId = () => {
+  const { fetchData, isLoading, error } = useApi();
+
+  const getGetReviewsByHostId = async () => {
+    const response = await fetchData<any>(`/reviews/getReviewByHostId`);
+    return response;
+  };
+
+  return {
+    getGetReviewsByHostId,
+    isLoading,
+    error,
+  };
+};

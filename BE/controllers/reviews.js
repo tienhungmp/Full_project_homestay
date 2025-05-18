@@ -184,8 +184,8 @@ exports.deleteReview = asyncHandler(async (req, res, next) => {
 // @route   GET /api/hosts/:hostId/reviews
 // @access  Public
 exports.getReviewsByHost = asyncHandler(async (req, res, next) => {
-    // Find all homestays belonging to the host from query
-    const homestays = await Homestay.find({ host: req.query.hostId });
+    const homestays = await Homestay.find({ host: req.user._id })
+        .select('_id name address');
     
     // Get all homestay IDs
     const homestayIds = homestays.map(homestay => homestay._id);
@@ -209,6 +209,7 @@ exports.getReviewsByHost = asyncHandler(async (req, res, next) => {
     res.status(200).json({
         success: true,
         count: reviews.length,
-        data: reviews
+        data: reviews,
+        homestays
     });
 });
