@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useApi } from './useApi';
 import { Property } from '@/types/property';
 import { useState } from 'react';
+import { AxiosRequestConfig } from 'axios';
 
 interface FilterParams {
   location?: string;
@@ -16,34 +17,29 @@ interface FilterParams {
 }
 
 export const useHomestays = (
-  page: number = 1, 
+  page: number = 1,
   limit: number = 9,
   filters?: FilterParams
 ) => {
-  const { fetchData } = useApi();
+  const { fetchData, isLoading, error } = useApi();
 
-  return useQuery({
-    queryKey: ['homestays', page, limit, filters],
-    queryFn: async () => {
-      const response = await fetchData<{
-        data: Property[];
-        total: number;
-      }>('/homestays', {
-        page,
-        limit,
-        ...filters,
-        types: filters?.types?.join(','),
-        checkIn: filters?.checkIn?.toISOString(),
-        checkOut: filters?.checkOut?.toISOString(),
-      });
+  const getHomestays = async () => {
+    const response = await fetchData<any>('/homestays', {
+      page,
+      limit,
+      ...filters,
+      types: filters?.types?.join(','),
+      checkIn: filters?.checkIn?.toISOString(),
+      checkOut: filters?.checkOut?.toISOString(),
+    });
+    return response;
+  };
 
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to fetch homestays');
-      }
-
-      return response.data;
-    },
-  });
+  return {
+    getHomestays,
+    isLoading,
+    error,
+  };
 };
 
 
@@ -89,3 +85,59 @@ export const useGetHomestayTopRate = () => {
     error,
   };
 };
+
+export const useGetAllHomestayByHost= () => {
+  const { fetchData, isLoading, error } = useApi();
+
+  const getAllHomestayByHost = async () => {
+    const response = await fetchData<any>(`/homestays/getHomestaysByHost`);
+    return response;
+  };
+
+  return {
+    getAllHomestayByHost,
+    isLoading,
+    error,
+  };
+};
+
+
+export const useCreateHomestay = () => {
+  const { createData, isLoading, error } = useApi();
+
+  const createHomestay = async (homestayData: any) => {
+    const config: AxiosRequestConfig = {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    };
+
+    const response = await createData<any>(
+      "/homestays",
+        homestayData,
+        config
+    );
+    return response;
+  };
+
+  return {
+    createHomestay,
+    isLoading,
+    error,
+  };
+};
+
+export const useDeleteHomestay = () => {
+  const { deleteData, isLoading, error } = useApi();
+
+  const deleteHomestay = async (homestayId: string) => {
+    const response = await deleteData<any>(`/homestays/${homestayId}`);
+    return response;
+  };
+
+  return {
+    deleteHomestay,
+    isLoading,
+    error, 
+  }
+}

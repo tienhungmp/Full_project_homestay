@@ -25,7 +25,28 @@ interface SearchFiltersProps {
   setSelectedAmenities: (amenities: Record<string, boolean>) => void;
   minRating: number;
   setMinRating: (rating: number) => void;
+  setToggleFilter: (isFilter: boolean) => void;
+  toggleFilter: boolean
 }
+
+const amenitiesMap = {
+  'WiFi': 'WiFi',
+  'Air Conditioning': 'Máy lạnh',
+  'TV': 'TV',
+  'Kitchen': 'Nhà bếp',
+  'Washing Machine': 'Máy giặt',
+  'Free Parking': 'Chỗ đậu xe miễn phí',
+  'Pool': 'Hồ bơi',
+  'Garden': 'Vườn',
+  'BBQ': 'Nướng BBQ',
+  'Hot Water': 'Nước nóng',
+  'Refrigerator': 'Tủ lạnh',
+  'Microwave': 'Lò vi sóng',
+  'Security Camera': 'Camera an ninh',
+  'First Aid Kit': 'Bộ sơ cứu',
+  'Fire Extinguisher': 'Bình chữa cháy'
+};
+
 
 const SearchFilters: React.FC<SearchFiltersProps> = ({
   location,
@@ -42,7 +63,14 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
   setSelectedAmenities,
   minRating,
   setMinRating,
+  setToggleFilter,
+  toggleFilter
 }) => {
+
+  const handleSubmitToggleFilter = () => {
+    console.log('toggleFilter', toggleFilter);
+    setToggleFilter(!toggleFilter);
+  };
   return (
     <div className="bg-white rounded-lg shadow p-4">
       <h3 className="font-semibold text-lg mb-4">Lọc kết quả</h3>
@@ -128,8 +156,8 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
           Khoảng giá ({priceRange[0].toLocaleString('vi-VN')}đ - {priceRange[1].toLocaleString('vi-VN')}đ)
         </label>
         <Slider
-          defaultValue={[500000, 3000000]}
-          min={100000}
+          defaultValue={[100000, 3000000]}
+          min={10000}
           max={5000000}
           step={100000}
           value={priceRange}
@@ -202,14 +230,14 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
                 htmlFor={`amenity-${amenity}`}
                 className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
-                {amenity}
+                {amenitiesMap[amenity]}
               </label>
             </div>
           ))}
         </div>
       </div>
       
-      <Button className="w-full bg-brand-blue hover:bg-brand-blue/90">
+      <Button className="w-full bg-brand-blue hover:bg-brand-blue/90" onClick={handleSubmitToggleFilter}>
         <SearchIcon className="mr-2 h-4 w-4" />
         Áp dụng bộ lọc
       </Button>

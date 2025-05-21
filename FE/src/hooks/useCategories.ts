@@ -9,18 +9,14 @@ export interface Category {
 }
 
 export const useCategories = () => {
-  const { fetchData } = useApi();
+  const { fetchData, isLoading, error } = useApi();
 
-  return useQuery({
-    queryKey: ['categories'],
-    queryFn: async () => {
-      const response = await fetchData<{ data: Category[] }>('/categories');
-
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to fetch categories');
-      }
-
-      return response.data;
-    },
-  });
+  const getCategories = async () => {
+    const response = await fetchData<any>(`/categories`);
+    return response;
+  };
+  
+  return {
+    getCategories
+  }
 };

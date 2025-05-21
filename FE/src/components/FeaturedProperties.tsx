@@ -10,8 +10,6 @@ const FeaturedProperties = () => {
     getHomestayTopRate();
   }, []);
 
-  console.log(homestays);
-
   return (
     <>
       {homestays && (

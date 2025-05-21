@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/auth";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { Textarea } from "@/components/ui/textarea";
+import PropertyDetailsModal from "@/components/dashboard/PropertyDetailsModal";
+import PropertyEditModal from "@/components/dashboard/PropertyEditModal";
 import { 
   Home, 
   PlusCircle, 
@@ -20,7 +23,10 @@ import {
   Package,
   ThumbsUp,
   ThumbsDown,
-  Meh
+  Meh,
+  Eye,
+  Check,
+  BedDouble
 } from "lucide-react";
 import {
   Tabs,
@@ -55,44 +61,16 @@ import { toast } from "sonner";
 import RevenueChart from "@/components/dashboard/RevenueChart";
 import { Review } from "@/types/property";
 import { useGetReviewsByHostId } from "@/hooks/useReviews";
-import { useGetInfoHostDashboard } from "@/hooks/useOrder";
+import { useGetAllBookingOfHost, useGetInfoHostDashboard, useUpadteStatusOrder } from "@/hooks/useOrder";
+import { useDeleteHomestay, useGetAllHomestayByHost } from "@/hooks/useHomestays";
+import AddHomeStay from "@/components/dashboard/AddHomeStay";
+import { useCategories } from "@/hooks/useCategories";
 
-// Sample data
-const revenueData = [
-  { name: "T1", revenue: 2100 },
-  { name: "T2", revenue: 1800 },
-  { name: "T3", revenue: 2400 },
-  { name: "T4", revenue: 2700 },
-  { name: "T5", revenue: 3100 },
-  { name: "T6", revenue: 3600 },
-  { name: "T7", revenue: 4200 },
-  { name: "T8", revenue: 3900 },
-  { name: "T9", revenue: 3400 },
-  { name: "T10", revenue: 2900 },
-  { name: "T11", revenue: 2500 },
-  { name: "T12", revenue: 3200 },
-];
 
 const properties = [
-  { id: 1, name: "Villa Đà Lạt View Đồi", location: "Đà Lạt", price: 1200000, bookings: 24, status: "active" },
+  { id: 1, name: "Villa Đà Lạt View Đồi", location: "Đà Lạt", price: 1200000, bookings: 24, status: "active", totalRoom: 10 },
   { id: 2, name: "Căn hộ Seaside", location: "Nha Trang", price: 850000, bookings: 18, status: "active" },
   { id: 3, name: "Nhà vườn Hội An", location: "Hội An", price: 1500000, bookings: 15, status: "maintenance" },
-];
-
-const bookings = [
-  { id: "B1001", property: "Villa Đà Lạt View Đồi", guest: "Nguyễn Văn A", checkIn: "12/09/2023", checkOut: "15/09/2023", guests: 4, status: "completed" },
-  { id: "B1002", property: "Căn hộ Seaside", guest: "Trần Thị B", checkIn: "20/09/2023", checkOut: "22/09/2023", guests: 2, status: "upcoming" },
-  { id: "B1003", property: "Villa Đà Lạt View Đồi", guest: "Lê Văn C", checkIn: "05/10/2023", checkOut: "10/10/2023", guests: 6, status: "pending" },
-  { id: "B1004", property: "Nhà vườn Hội An", guest: "Phạm Thị D", checkIn: "15/10/2023", checkOut: "20/10/2023", guests: 3, status: "canceled" },
-];
-
-const reviews: Review[] = [
-  { id: 1, property: "Villa Đà Lạt View Đồi", guest: "Nguyễn Văn A", date: "16/09/2023", rating: 5, content: "Căn villa rất đẹp, view tuyệt vời, chủ nhà thân thiện.", sentiment: "positive" },
-  { id: 2, property: "Căn hộ Seaside", guest: "Trần Thị B", date: "23/09/2023", rating: 4, content: "Vị trí thuận tiện, gần biển, phòng sạch sẽ.", sentiment: "positive" },
-  { id: 3, property: "Villa Đà Lạt View Đồi", guest: "Hoàng Văn E", date: "12/09/2023", rating: 3, content: "Phòng ổn, nhưng hơi ồn vào buổi tối.", sentiment: "neutral" },
-  { id: 4, property: "Căn hộ Seaside", guest: "Lý Thị F", date: "18/10/2023", rating: 2, content: "Phòng không sạch sẽ như hình ảnh, nhân viên phục vụ thái độ.", sentiment: "negative" },
-  { id: 5, property: "Nhà vườn Hội An", guest: "Trần Văn G", date: "25/10/2023", rating: 5, content: "Không gian rất đẹp và yên tĩnh, chủ nhà thân thiện, nấu ăn ngon.", sentiment: "positive" },
-  { id: 6, property: "Nhà vườn Hội An", guest: "Phạm Thị H", date: "01/11/2023", rating: 1, content: "Quá tệ! Phòng bẩn, dịch vụ kém, giá cả không xứng đáng.", sentiment: "negative" },
 ];
 
 const HostDashboard = () => {
@@ -106,37 +84,98 @@ const HostDashboard = () => {
   const [reviewsUser, setReviewsUser] = useState<any[]>();
   const [homestayReviews, setHomestayReviews] = useState<any[]>([]);
   const [infoHostDashboard, setInfoHostDashboard] = useState<any>();  
+  const [viewingProperty, setViewingProperty] = useState<typeof properties[0] | null>(null);
+  const [bookings, setBookings] = useState<any[]>([])
+  const [homestays, setHomestays] = useState<any[]>([])
+  const [categories, setCategories] = useState<any[]>([])
   const {getGetReviewsByHostId} =  useGetReviewsByHostId()
   const {getGetInfoHostDashboard} =  useGetInfoHostDashboard();
+  const {getAllBookingOfHost} = useGetAllBookingOfHost();
+  const {getAllHomestayByHost} = useGetAllHomestayByHost();
+  const {deleteHomestay} = useDeleteHomestay();
+  const {getCategories} = useCategories();
+  const {updateOrderStatus} = useUpadteStatusOrder();
+  const [editingProperty, setEditingProperty] = useState<typeof properties[0] | null>(null);
   // Handle property operations
   const handleAddProperty = () => {
-    toast.success("Thêm chỗ nghỉ mới");
+    toast.success("Chức năng thêm chỗ nghỉ mới sẽ được cập nhật sau!");
   };
 
-  const handleEditProperty = (id: number) => {
-    toast.success(`Chỉnh sửa chỗ nghỉ ID: ${id}`);
+  const handleEditProperty = (property: typeof properties[0]) => {
+    setEditingProperty(property);
   };
 
-  const handleDeleteProperty = (id: number) => {
-    toast.success(`Đã xóa chỗ nghỉ ID: ${id}`);
+  const handleSaveEditedProperty = (updatedProperty: typeof properties[0]) => {
+    // In a real app, you would send an API request to update the property
+    // For now, we'll just update it in our local data
+    const updatedProperties = properties.map(prop => 
+      prop.id === updatedProperty.id ? updatedProperty : prop
+    );
+    // Here we would typically update the state with the new properties
+    toast.success(`Đã cập nhật thông tin chỗ nghỉ: ${updatedProperty.name}`);
+    setEditingProperty(null);
+  };
+
+  const handleDeleteProperty = async (id: string) => {
+    const responseDelete =  await deleteHomestay(id);
+    if(responseDelete.success) {
+      toast.success(`Đã xóa chỗ nghỉ: ${id}`);
+      const updatedHomestays = homestays.filter(homestay => homestay._id !== id);
+      setHomestays(updatedHomestays);
+    }
   };
 
   // Handle booking operations
-  const handleApproveBooking = (id: string) => {
-    toast.success(`Đã xác nhận đơn đặt phòng: ${id}`);
+  // 'pending', 'confirmed', 'cancelled', 'completed'
+  const handleApproveBooking = async (id: string) => {
+    const response = await updateOrderStatus({orderId: id, bookingStatus: 'confirmed'});
+    if(response.success) {
+      toast.success(`Đã duyệt đơn đặt phòng: ${id}`);
+      const updatedBooking= bookings.map((booking) => {
+        if(booking._id === id) {
+          booking.bookingStatus = 'confirmed';
+        }
+        return booking;
+      });
+      setBookings(updatedBooking)
+    }
   };
 
-  const handleCancelBooking = (id: string) => {
-    toast.success(`Đã hủy đơn đặt phòng: ${id}`);
+  const handleCancelBooking = async (id: string) => {
+    const response = await updateOrderStatus({orderId: id, bookingStatus: 'cancelled'});
+    if(response.success) {
+      toast.success(`Đã hủy đơn đặt phòng: ${id}`)
+      const updatedBooking= bookings.map((booking) => {
+        if(booking._id === id) {
+          booking.bookingStatus = 'cancelled';
+        }
+        return booking;
+      });
+      setBookings(updatedBooking)
+    }
   };
 
-  const handleSendConfirmationEmail = (id: string) => {
-    toast.success(`Đã gửi email xác nhận cho đơn đặt phòng: ${id}`);
+  const handleSendConfirmationEmail = async (id: string) => {
+    const response = await updateOrderStatus({orderId: id, bookingStatus: 'completed'});
+    if(response.success) {
+      toast.success(`Đã gửi email xác nhận cho đơn đặt phòng: ${id}`);
+      const updatedBooking= bookings.map((booking) => {
+        if(booking._id === id) {
+          booking.bookingStatus = 'completed';
+        }
+        return booking;
+      });
+      setBookings(updatedBooking)
+    }
   };
 
   // Handle showing reviews for a specific property
   const handleShowPropertyReviews = (propertyName: {id:string, name:string}) => {
     setSelectedProperty(propertyName);
+  };
+
+  const handleViewProperty = (property: typeof properties[0]) => {
+    setViewingProperty(property);
   };
 
   // Get sentiment icon
@@ -154,19 +193,18 @@ const HostDashboard = () => {
   };
 
   // Filter properties
-  const filteredProperties = properties.filter(property =>
-    property.name.toLowerCase().includes(propertySearchQuery.toLowerCase()) ||
-    property.location.toLowerCase().includes(propertySearchQuery.toLowerCase())
+  const filteredProperties = homestays.filter(homestay =>
+    homestay.name.toLowerCase().includes(propertySearchQuery.toLowerCase()) ||
+    homestay.address.toLowerCase().includes(propertySearchQuery.toLowerCase())
   );
 
   // Filter bookings
-  const filteredBookings = bookings.filter(booking => {
-    const matchesSearch = booking.guest.toLowerCase().includes(bookingSearchQuery.toLowerCase()) ||
-                          booking.property.toLowerCase().includes(bookingSearchQuery.toLowerCase()) ||
-                          booking.id.toLowerCase().includes(bookingSearchQuery.toLowerCase());
-    const matchesStatus = bookingStatus ? booking.status === bookingStatus : true;
+  const filteredBookings = bookings.length > 0 ? bookings.filter(booking => {
+    const matchesSearch = booking.homestay.name.toLowerCase().includes(bookingSearchQuery.toLowerCase()) ||
+                          (' #' + booking.id.slice(-6)).toLowerCase().includes(bookingSearchQuery.toLowerCase());
+    const matchesStatus = bookingStatus ? booking.bookingStatus === bookingStatus : true;
     return matchesSearch && matchesStatus;
-  });
+  }): bookings;
 
   // Filter reviews based on selected property
   const filteredReviews = selectedProperty 
@@ -176,10 +214,16 @@ const HostDashboard = () => {
     const fetchData = async () => {
       const responseReviews = await getGetReviewsByHostId();
       const responseInfoHostDashboard = await getGetInfoHostDashboard();
+      const responseAllBookingOfHost = await getAllBookingOfHost();
+      const responseAlllHomestayByHost = await getAllHomestayByHost();
+      const responseCategories = await getCategories();
       if(responseReviews.success && responseInfoHostDashboard.success) {
         setReviewsUser(responseReviews.data.data);
         setInfoHostDashboard(responseInfoHostDashboard.data.data);
         setHomestayReviews(responseReviews.data.homestays);
+        setBookings(responseAllBookingOfHost.data.data);
+        setHomestays(responseAlllHomestayByHost.data.data);
+        setCategories(responseCategories.data.data)
       }
     };
     fetchData();
@@ -310,25 +354,29 @@ const HostDashboard = () => {
                       </TableHeader>
                       <TableBody>
                         {filteredProperties.map((property) => (
-                          <TableRow key={property.id}>
-                            <TableCell>{property.id}</TableCell>
+                          <TableRow key={property._id}>
+                            <TableCell>#{property._id.slice(-6).toUpperCase()}</TableCell>
                             <TableCell className="font-medium">{property.name}</TableCell>
-                            <TableCell>{property.location}</TableCell>
+                            <TableCell>{property.address}</TableCell>
                             <TableCell>{property.price.toLocaleString()}</TableCell>
-                            <TableCell>{property.bookings}</TableCell>
+                            <TableCell>{property.bookingCount}</TableCell>
                             <TableCell>
                               <span className={`px-2 py-1 rounded-full text-xs ${
-                                property.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+                                property.status === 'hoạt động' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
                               }`}>
-                                {property.status === 'active' ? 'Hoạt động' : 'Bảo trì'}
+                                {property.status === 'hoạt động' ? 'Hoạt động' : 'Bảo trì'}
                               </span>
                             </TableCell>
                             <TableCell>
-                              <div className="flex gap-2">
-                                <Button variant="outline" size="sm" onClick={() => handleEditProperty(property.id)}>
+                              <div className="flex gap-2 flex-wrap">
+                                <Button variant="outline" size="sm" className="text-blue-500" onClick={() => handleViewProperty(property)}>
+                                  <Eye className="h-3 w-3 mr-1" />
+                                  Xem
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={() => handleEditProperty(property)}>
                                   Chỉnh sửa
                                 </Button>
-                                <Button variant="outline" size="sm" className="text-red-500" onClick={() => handleDeleteProperty(property.id)}>
+                                <Button variant="outline" size="sm" className="text-red-500" onClick={() => handleDeleteProperty(property._id)}>
                                   Xóa
                                 </Button>
                               </div>
@@ -349,60 +397,24 @@ const HostDashboard = () => {
                   )}
                 </CardContent>
               </Card>
+              {viewingProperty && (
+                <PropertyDetailsModal 
+                  open={!!viewingProperty} 
+                  onClose={() => setViewingProperty(null)} 
+                  property={viewingProperty} 
+                />
+              )}
 
-              <Card className="mt-6">
-                <CardHeader>
-                  <CardTitle>Thêm chỗ nghỉ mới</CardTitle>
-                  <CardDescription>
-                    Điền thông tin và tải lên hình ảnh cho chỗ nghỉ mới của bạn
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-6 md:grid-cols-2">
-                    <div className="space-y-4">
-                      <div>
-                        <label className="text-sm font-medium mb-1 block">Tên chỗ nghỉ</label>
-                        <Input placeholder="Nhập tên chỗ nghỉ" />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium mb-1 block">Địa điểm</label>
-                        <Input placeholder="Nhập địa điểm" />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium mb-1 block">Giá/đêm (VND)</label>
-                        <Input type="number" placeholder="Nhập giá tiền" />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium mb-1 block">Loại chỗ nghỉ</label>
-                        <Select>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Chọn loại chỗ nghỉ" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="villa">Villa</SelectItem>
-                            <SelectItem value="apartment">Căn hộ</SelectItem>
-                            <SelectItem value="homestay">Homestay</SelectItem>
-                            <SelectItem value="hotel">Khách sạn</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    
-                    <div className="border-2 border-dashed rounded-lg p-4 h-64 flex flex-col items-center justify-center text-center">
-                      <Upload className="h-10 w-10 text-gray-400 mb-2" />
-                      <h3 className="text-lg font-medium mb-1">Tải lên hình ảnh</h3>
-                      <p className="text-sm text-gray-500 mb-4">Kéo thả hoặc click để chọn hình ảnh</p>
-                      <Button variant="outline" size="sm">
-                        Chọn hình ảnh
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <Button className="w-full mt-6 bg-brand-blue hover:bg-brand-blue/90">
-                    Lưu chỗ nghỉ mới
-                  </Button>
-                </CardContent>
-              </Card>
+              {editingProperty && (
+                <PropertyEditModal
+                  open={!!editingProperty}
+                  onClose={() => setEditingProperty(null)}
+                  property={editingProperty}
+                  onSave={handleSaveEditedProperty}
+                />
+              )}
+
+            <AddHomeStay categories={categories} />
             </TabsContent>
 
             {/* Bookings Content */}
@@ -428,7 +440,6 @@ const HostDashboard = () => {
                         <SelectContent>
                           <SelectItem value="all">Tất cả</SelectItem>
                           <SelectItem value="pending">Chờ xác nhận</SelectItem>
-                          <SelectItem value="upcoming">Sắp tới</SelectItem>
                           <SelectItem value="completed">Đã hoàn thành</SelectItem>
                           <SelectItem value="canceled">Đã hủy</SelectItem>
                         </SelectContent>
@@ -449,51 +460,74 @@ const HostDashboard = () => {
                           <TableHead>Số khách</TableHead>
                           <TableHead>Trạng thái</TableHead>
                           <TableHead>Thao tác</TableHead>
+                          <TableHead>Ngày Tạo</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {filteredBookings.map((booking) => (
                           <TableRow key={booking.id}>
-                            <TableCell className="font-medium">{booking.id}</TableCell>
-                            <TableCell>{booking.property}</TableCell>
-                            <TableCell>{booking.guest}</TableCell>
-                            <TableCell>{booking.checkIn}</TableCell>
-                            <TableCell>{booking.checkOut}</TableCell>
-                            <TableCell>{booking.guests}</TableCell>
+                            <TableCell className="font-medium">#{booking.id.slice(-6).toUpperCase()}</TableCell>
+                            <TableCell>{booking.homestay.name}</TableCell>
+                            <TableCell>{booking.user ? booking.user.name : booking.guestName}</TableCell>
+                            <TableCell>{new Date(booking.checkInDate).toLocaleString('vi-VN', {
+                              year: 'numeric',
+                              month: '2-digit', 
+                              day: '2-digit',
+                            })}</TableCell>
+                            <TableCell>{new Date(booking.checkOutDate).toLocaleString('vi-VN', {
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit', 
+                            })}</TableCell>
+                            <TableCell>{booking.numberOfGuests}</TableCell>
                             <TableCell>
                               <span className={`px-2 py-1 rounded-full text-xs ${
-                                booking.status === 'completed' ? 'bg-green-100 text-green-800' : 
-                                booking.status === 'upcoming' ? 'bg-blue-100 text-blue-800' :
-                                booking.status === 'pending' ? 'bg-amber-100 text-amber-800' :
-                                'bg-red-100 text-red-800'
+                                booking.bookingStatus === 'completed' ? 'bg-green-100 text-green-800' : 
+                                booking.bookingStatus === 'confirmed' ? 'bg-blue-100 text-blue-800' :
+                                booking.bookingStatus === 'pending' ? 'bg-amber-100 text-amber-800' :
+                                booking.bookingStatus === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                'bg-gray-100 text-gray-800'
                               }`}>
-                                {booking.status === 'completed' ? 'Đã hoàn thành' : 
-                                 booking.status === 'upcoming' ? 'Sắp tới' :
-                                 booking.status === 'pending' ? 'Chờ xác nhận' :
-                                 'Đã hủy'}
+                                {booking.bookingStatus === 'completed' ? 'Đã hoàn thành' : 
+                                 booking.bookingStatus === 'confirmed' ? 'Đã xác nhận' :
+                                 booking.bookingStatus === 'pending' ? 'Chờ xác nhận' :
+                                 booking.bookingStatus === 'cancelled' ? 'Đã hủy' :
+                                 'Không xác định'}
                               </span>
                             </TableCell>
                             <TableCell>
-                              <div className="flex flex-col sm:flex-row gap-2">
-                                {booking.status === 'pending' && (
-                                  <Button variant="outline" size="sm" className="text-green-500" onClick={() => handleApproveBooking(booking.id)}>
-                                    Xác nhận
-                                  </Button>
-                                )}
-                                
-                                {(booking.status === 'pending' || booking.status === 'upcoming') && (
-                                  <Button variant="outline" size="sm" className="text-red-500" onClick={() => handleCancelBooking(booking.id)}>
-                                    Hủy
-                                  </Button>
-                                )}
-                                
-                                {booking.status === 'upcoming' && (
-                                  <Button variant="outline" size="sm" onClick={() => handleSendConfirmationEmail(booking.id)}>
-                                    Gửi email
-                                  </Button>
-                                )}
-                              </div>
+                              <Select 
+                                value={booking.bookingStatus}
+                                onValueChange={(value) => {
+                                  switch(value) {
+                                    case 'confirmed':
+                                      handleApproveBooking(booking._id);
+                                      break;
+                                    case 'cancelled':
+                                      handleCancelBooking(booking._id);
+                                      break;
+                                    case 'completed':
+                                      handleSendConfirmationEmail(booking._id);
+                                      break;
+                                  }
+                                }}
+                              >
+                                <SelectTrigger className="w-[130px]">
+                                  <SelectValue placeholder="Chọn trạng thái" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="pending">Chờ xác nhận</SelectItem>
+                                  <SelectItem value="confirmed">Đã xác nhận</SelectItem>
+                                  <SelectItem value="completed">Hoàn thành</SelectItem>
+                                  <SelectItem value="cancelled">Đã hủy</SelectItem>
+                                </SelectContent>
+                              </Select>
                             </TableCell>
+                            <TableCell>{new Date(booking.createdAt).toLocaleString('vi-VN', {
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit', 
+                            })}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>

@@ -110,7 +110,8 @@ exports.createBooking = asyncHandler(async (req, res, next) => {
     }
 
     // 3. Kiểm tra xem đã có người đặt và thanh toán trong khoảng thời gian này chưa
-    const existingBooking = await Booking.findOne({
+    // Count existing bookings for the same date range
+    const existingBookings = await Booking.find({
         homestay: propertyId,
         paymentStatus: 'paid',
         $or: [
@@ -121,8 +122,9 @@ exports.createBooking = asyncHandler(async (req, res, next) => {
         ]
     });
 
-    if (existingBooking) {
-        return next(new ErrorResponse('Homestay này đã được đặt trong khoảng thời gian bạn chọn.', 400));
+    // Check if number of existing bookings exceeds available rooms
+    if (existingBookings.length >= homestay.numberOfRooms) {
+        return next(new ErrorResponse('Homestay này đã hết phòng trong khoảng thời gian bạn chọn.', 400));
     }
 
     // 4. Tạo booking
@@ -471,19 +473,20 @@ exports.createBookingWithoutAccount = asyncHandler(async (req, res, next) => {
     }
   
     // Kiểm tra trùng booking đã thanh toán
-    const existingBooking = await Booking.findOne({
-      homestay: propertyId,
-      paymentStatus: 'paid',
-      $or: [
-        {
-          checkInDate: { $lt: checkOutDate },
-          checkOutDate: { $gt: checkInDate }
-        }
-      ]
+    const existingBookings = await Booking.find({
+        homestay: propertyId,
+        paymentStatus: 'paid',
+        $or: [
+            {
+                checkInDate: { $lt: checkOutDate },
+                checkOutDate: { $gt: checkInDate }
+            }
+        ]
     });
-  
-    if (existingBooking) {
-      return next(new ErrorResponse('Homestay này đã được đặt trong khoảng thời gian bạn chọn.', 400));
+
+    // Check if number of existing bookings exceeds available rooms
+    if (existingBookings.length >= homestay.numberOfRooms) {
+        return next(new ErrorResponse('Homestay này đã hết phòng trong khoảng thời gian bạn chọn.', 400));
     }
   
     // Tạo booking
@@ -608,6 +611,78 @@ const monthlyRatingStats = monthlyRatings.length > 0 ? {
             monthlyBookings,
             totalHomestays: hostHomestays.length,
             averageRating: monthlyRatingStats
+        }
+    });
+});
+
+
+// @desc    Get all bookings by host ID
+// @route   GET /api/bookings/host
+// @access  Private (Host)
+exports.getBookingsByHostId = asyncHandler(async (req, res, next) => {
+    const hostId = req.user._id;
+
+    // Check if hostId is provided
+    if (!hostId) {
+        return next(new ErrorResponse('Host ID is required', 400));
+    }
+
+    // Get all homestays owned by the host
+    const hostHomestays = await Homestay.find({ host: hostId }).select('_id');
+    const hostHomestayIds = hostHomestays.map(h => h._id);
+
+    // Get all bookings for host's homestays
+    const bookings = await Booking.find({
+        homestay: { $in: hostHomestayIds }
+    })
+    .populate('homestay', 'name address price')
+    .populate('user', 'name email')
+    .sort('-createdAt');
+
+    res.status(200).json({
+        success: true,
+        count: bookings.length,
+        data: bookings
+    });
+});
+
+
+// @desc    Get available rooms for a homestay on specific dates
+// @route   POST /api/bookings/check-availability
+// @access  Public
+exports.checkAvailability = asyncHandler(async (req, res, next) => {
+    const { homestayId, date } = req.query;
+
+    if (!homestayId || !date) {
+        return next(new ErrorResponse('Please provide homestay ID and date', 400));
+    }
+
+    const homestay = await Homestay.findById(homestayId);
+    if (!homestay) {
+        return next(new ErrorResponse(`Homestay not found with id ${homestayId}`, 404));
+    }
+
+    const checkDate = new Date(date);
+
+    const bookedRooms = await Booking.find({
+        homestay: homestayId,
+        paymentStatus: 'paid',
+        checkInDate: { $lte: checkDate },
+        checkOutDate: { $gt: checkDate }
+    });
+
+    console.log(bookedRooms)
+
+    const totalRooms = homestay.numberOfRooms;
+    const availableRooms = totalRooms - bookedRooms.length;
+
+    res.status(200).json({
+        success: true,
+        data: {
+            totalRooms,
+            bookedRooms,
+            availableRooms,
+            date: checkDate
         }
     });
 });

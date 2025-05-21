@@ -105,3 +105,48 @@ export const useGetOrderById = () => {
       error,
     };
   };
+
+  export const useGetAllBookingOfHost= () => {
+    const { fetchData, isLoading, error } = useApi();
+
+    const getAllBookingOfHost = async () => {
+      const response = await fetchData<any>(`/bookings/get-all-bookings-of-host`);
+      return response;
+    };
+
+    return {
+      getAllBookingOfHost,
+      isLoading,
+      error,
+    };
+  };
+
+  export const useCheckAvailabilityHomestay = () => {
+    const { fetchData, isLoading, error } = useApi();
+  
+    const getCheckAvailabilityHomestay = async (params: {homestayId:string, date:Date}) => {
+      const response = await fetchData<any>(`/bookings/check-availability?homestayId=${params.homestayId}&date=${params.date}`);
+      return response;
+    };
+  
+    return {
+      getCheckAvailabilityHomestay,
+      isLoading,
+      error,
+    };
+  };
+
+  export const useUpadteStatusOrder = () => {
+    const { updateData, isLoading, error } = useApi();
+  
+    const updateOrderStatus = async (orderInfo: {orderId: string, paymentStatus?: string, bookingStatus?:string}) => {
+      const response = await updateData<any>(`/bookings/${orderInfo.orderId}`, orderInfo);
+      return response;
+    };
+  
+    return {
+      updateOrderStatus,
+      isLoading,
+      error,
+    };
+  }

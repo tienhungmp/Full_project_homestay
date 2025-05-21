@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropertyCard from '@/components/PropertyCard';
 import { Property } from '@/types/property';
 import { useHomestays } from '@/hooks/useHomestays';
@@ -11,6 +11,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { set } from 'date-fns';
 
 interface SearchResultsProps {
   location?: string;
@@ -20,6 +21,8 @@ interface SearchResultsProps {
   selectedTypes?: string[];
   selectedAmenities?: string[];
   minRating?: number;
+  averageRating: number;
+  toggleFilter: boolean;
 }
 
 const ITEMS_PER_PAGE = 9;
@@ -32,6 +35,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
   selectedTypes,
   selectedAmenities,
   minRating,
+  toggleFilter
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState<string>('recommended');
@@ -46,9 +50,17 @@ const SearchResults: React.FC<SearchResultsProps> = ({
     amenities: selectedAmenities?.filter(amenity => amenity),
     minRating,
   };
+  const [data, setData] = useState<any>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [toggleFilters, setToggleFilters] = useState(toggleFilter);
+  const {getHomestays} = useHomestays(currentPage, ITEMS_PER_PAGE, filters);
 
-  const { data, isLoading, error } = useHomestays(currentPage, ITEMS_PER_PAGE, filters);
-
+  // const { data, isLoading, error } = useHomestays(currentPage, ITEMS_PER_PAGE, filters);
+  if(toggleFilter !== toggleFilters){
+    setToggleFilters(toggleFilter);
+    setCurrentPage(1)
+  }
   
   const properties = data?.data || [];
   const totalItems = data?.total || 0;
@@ -61,6 +73,18 @@ const SearchResults: React.FC<SearchResultsProps> = ({
     }
     return pages;
   };
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await getHomestays();
+      if(response.success){
+        setData(response.data);
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, [currentPage,toggleFilters]);
 
   if (isLoading) {
     return (
@@ -110,13 +134,15 @@ const SearchResults: React.FC<SearchResultsProps> = ({
               <PropertyCard key={property._id} {...{...property, image: property.images[0]}} />
             ))}
           </div>
-          
           {totalPages > 1 && (
             <Pagination className="mt-8">
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious 
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    onClick={() => {
+                      setCurrentPage(prev => Math.max(prev - 1, 1));
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
                     className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
                   />
                 </PaginationItem>
@@ -124,7 +150,10 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                 {getPageNumbers().map(pageNum => (
                   <PaginationItem key={pageNum}>
                     <PaginationLink
-                      onClick={() => setCurrentPage(pageNum)}
+                      onClick={() => {
+                        setCurrentPage(pageNum);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
                       isActive={currentPage === pageNum}
                     >
                       {pageNum}
@@ -134,7 +163,10 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                 
                 <PaginationItem>
                   <PaginationNext 
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    onClick={() => {
+                      setCurrentPage(prev => Math.min(prev + 1, totalPages));
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
                     className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
                   />
                 </PaginationItem>

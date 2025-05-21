@@ -6,7 +6,8 @@ const {
   updateHomestay,
   deleteHomestay,
   homestayPhotoUpload,
-  getTopRatedHomestays
+  getTopRatedHomestays,
+  getHomestaysByHost
 } = require('../controllers/homestays');
 
 const Homestay = require('../models/Homestay'); // Cần cho advancedResults nếu dùng
@@ -41,6 +42,8 @@ router
 
 
 router.get('/top-rated', getTopRatedHomestays);
+
+router.route('/getHomestaysByHost').get(protect, authorize('host'), getHomestaysByHost)
 
 router
   .route('/:id')

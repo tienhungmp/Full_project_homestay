@@ -6,7 +6,8 @@ export interface Property {
   price: number;
   rating: number;
   images: string[];
-  type: string;
+  type: string,
+  averageRating?: number;
 }
 
 

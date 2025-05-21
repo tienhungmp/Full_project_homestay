@@ -1,15 +1,16 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import SearchFilters from '@/components/search/SearchFilters';
 import SearchResults from '@/components/search/SearchResults';
+import { useCategories } from '@/hooks/useCategories';
 
 const Search = () => {
   const [location, setLocation] = useState('');
   const [checkIn, setCheckIn] = useState<Date | undefined>();
   const [checkOut, setCheckOut] = useState<Date | undefined>();
-  const [priceRange, setPriceRange] = useState([500000, 3000000]);
+  const [priceRange, setPriceRange] = useState([10000, 3000000]);
   const [selectedTypes, setSelectedTypes] = useState<Record<string, boolean>>({
     'Hotel': false,
     'Villa': false,
@@ -17,14 +18,25 @@ const Search = () => {
     'Resort': false,
   });
   const [selectedAmenities, setSelectedAmenities] = useState<Record<string, boolean>>({
-    'Wifi': false,
-    'Hồ bơi': false,
-    'Bãi đỗ xe': false,
-    'Điều hòa': false,
-    'Bếp': false,
-    'Máy giặt': false,
+    'WiFi':false,
+    'Air Conditioning': false,
+    'TV': false,
+    'Kitchen': false,
+    'Washing Machine': false,
+    'Free Parking': false,
+    'Pool': false,
+    'Garden': false,
+    'BBQ': false,
+    'Hot Water': false,
+    'Refrigerator': false,
+    'Microwave': false,
+    'Security Camera': false,
+    'First Aid Kit': false,
+    'Fire Extinguisher': false
   });
+  const {getCategories} = useCategories();
   const [minRating, setMinRating] = useState(0);
+  const [toggleFilter, setToggleFilter] = useState(false);
   
   // Convert selected types from Record<string, boolean> to string[]
   const selectedTypesArray = Object.entries(selectedTypes)
@@ -36,6 +48,18 @@ const Search = () => {
     .filter(([_, isSelected]) => isSelected)
     .map(([amenity]) => amenity);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      const responeCategories = await getCategories();
+      if(responeCategories.status) {
+        const newTypes : Record<string, boolean> = {};
+        responeCategories.data.data.map((category: any) => {
+          newTypes[category.name] = false;
+        });
+        setSelectedTypes(newTypes)
+    }}
+    fetchData();
+  },[]);
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -59,6 +83,8 @@ const Search = () => {
               setSelectedAmenities={setSelectedAmenities}
               minRating={minRating}
               setMinRating={setMinRating}
+              toggleFilter={toggleFilter}
+              setToggleFilter={setToggleFilter}
             />
           </div>
           
@@ -71,6 +97,7 @@ const Search = () => {
               selectedTypes={selectedTypesArray}
               selectedAmenities={selectedAmenitiesArray}
               minRating={minRating}
+              toggleFilter={toggleFilter}
             />
           </div>
         </div>

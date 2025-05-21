@@ -59,6 +59,7 @@ const HomestaySchema = new mongoose.Schema({
     type: Number,
     min: [1, 'Rating phải từ 1 sao trở lên'],
     max: [5, 'Rating không được quá 5 sao'],
+    default: 5
   },
   numberOfRooms: {
     type: Number,
@@ -77,7 +78,16 @@ const HomestaySchema = new mongoose.Schema({
   reviews: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Review' // Liên kết đến collection Review
-  }]
+  }],
+  status: {
+    type: String,
+    enum: {
+      values: ['hoạt động', 'bảo trì', 'ngừng hoạt động'],
+      message: '{VALUE} không phải là trạng thái hợp lệ'
+    },
+    default: 'hoạt động',
+    required: [true, 'Vui lòng chọn trạng thái homestay']
+  },
 });
 
 // Middleware để xóa các booking và review liên quan khi homestay bị xóa (tùy chọn)

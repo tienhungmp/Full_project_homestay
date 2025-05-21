@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { get, post, put, del, patch, ApiResponse } from '@/lib/api';
+import { AxiosRequestConfig } from 'axios';
 
 // Generic hook for API calls with loading and error state management
 export function useApi() {
@@ -42,8 +43,12 @@ export function useApi() {
     return apiCall<T>(() => get<T>(url, params));
   };
 
-  const createData = <T>(url: string, data: any) => {
-    return apiCall<T>(() => post<T>(url, data));
+  const createData = <T>(
+    url: string,
+    data: any,
+    config?: AxiosRequestConfig
+  ) => {
+    return apiCall<T>(() => post<T>(url, data, config));
   };
 
   const updateData = <T>(url: string, data: any) => {

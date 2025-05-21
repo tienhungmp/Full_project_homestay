@@ -2,22 +2,86 @@ const Homestay = require('../models/Homestay');
 const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middlewares/async');
 const path = require('path');
+const Booking = require('../models/Booking');
 
 // @desc    Lấy tất cả homestay
 // @route   GET /api/homestays
 // @access  Public
 exports.getHomestays = asyncHandler(async (req, res, next) => {
-    // Triển khai logic filter, search, pagination ở đây hoặc dùng middleware advancedResults
-    // Ví dụ đơn giản:
-    const homestays = await Homestay.find().populate('host', 'name email'); // Populate thông tin host
+    console.log(req.query)
+// Build filter object based on query parameters
+    let filter = {};
+
+    // Location filter
+    if (req.query.location) {
+        filter.location = { $regex: req.query.location, $options: 'i' };
+    }
+
+    // Price range filter
+    if (req.query.minPrice || req.query.maxPrice) {
+        filter.price = {};
+        if (req.query.minPrice) filter.price.$gte = parseInt(req.query.minPrice);
+        if (req.query.maxPrice) filter.price.$lte = parseInt(req.query.maxPrice);
+    }
+
+    // Types filter
+    if (req.query.types) {
+        const typeArray = req.query.types.split(',');
+        filter.type = { $in: typeArray };
+    }
+
+    // Amenities filter
+    if (req.query['amenities[]']) {
+        const amenities = Array.isArray(req.query['amenities[]']) 
+            ? req.query['amenities[]'] 
+            : [req.query['amenities[]']];
+        filter.amenities = { $all: amenities };
+    }
+
+    // Rating filter
+    if (req.query.minRating) {
+        filter.averageRating = { $gte: parseFloat(req.query.minRating) };
+    }
+
+    console.log("Filter object:", filter);
+    // Get page and limit from query params, set defaults if not provided
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
+    const total = await Homestay.countDocuments();
+
+    // Get paginated homestays with host information
+    const homestays = await Homestay.find(filter)
+        .populate('host', 'name email')
+        .skip(startIndex)
+        .limit(limit);
+
+    // Prepare pagination object
+    const pagination = {};
+
+    // Add next page if available
+    if (endIndex < total) {
+        pagination.next = {
+            page: page + 1,
+            limit
+        };
+    }
+
+    // Add previous page if available
+    if (startIndex > 0) {
+        pagination.prev = {
+            page: page - 1,
+            limit
+        };
+    }
 
     res.status(200).json({
         success: true,
-        total: homestays.length,
+        total,
+        pagination,
         data: homestays,
     });
-    // Nếu dùng advancedResults:
-    // res.status(200).json(res.advancedResults);
 });
 
 // @desc    Lấy chi tiết một homestay
@@ -50,67 +114,77 @@ exports.getHomestay = asyncHandler(async (req, res, next) => {
 // @route   POST /api/homestays
 // @access  Private (Chỉ Host)
 exports.createHomestay = asyncHandler(async (req, res, next) => {
+    console.log("Uploaded files:", req.body);
     // Gán host là người dùng đăng nhập
-    req.body.host = req.user.id;
-
+    req.body.host = req.user._id;
+  
     // Kiểm tra role
     if (req.user.role !== 'host' && req.user.role !== 'admin') {
-        return next(new ErrorResponse('Chỉ chủ homestay (host) mới có thể tạo homestay', 403));
+      return next(new ErrorResponse('Chỉ chủ homestay (host) mới có thể tạo homestay', 403));
     }
-
+  
     const images = [];
-
-    // Handle image uploads if files are provided
-    if (req.files && req.files.images) {
-        const files = Array.isArray(req.files.images) ? req.files.images : [req.files.images];
-
-        // Process each uploaded image
-        for (const file of files) {
-            // Check if file is an image
-            if (!file.mimetype.startsWith('image')) {
-                return next(new ErrorResponse('Vui lòng chỉ upload file ảnh', 400));
-            }
-
-            // Check file size
-            if (file.size > process.env.MAX_FILE_UPLOAD) {
-                return next(
-                    new ErrorResponse(`Mỗi ảnh phải nhỏ hơn ${process.env.MAX_FILE_UPLOAD / 1024 / 1024}MB`, 400)
-                );
-            }
-
-            // Create custom filename
-            const filename = `homestay_${Date.now()}_${Math.round(Math.random() * 1E9)}${path.parse(file.name).ext}`;
-
-            // Move file to upload directory
-            await file.mv(`${process.env.FILE_UPLOAD_PATH}/${filename}`);
-            
-            // Add filename to images array
-            images.push(`/uploads/${filename}`);
+    // Hỗ trợ cả 2 kiểu key: "images" và "images[]"
+    const uploadField = (req.files?.images) || (req.files?.['images[]']);
+  
+    // Handle image uploads nếu có files
+    if (uploadField) {
+      // Chuẩn hoá thành mảng
+      const files = Array.isArray(uploadField) ? uploadField : [uploadField];
+  
+      for (const file of files) {
+        // Kiểm tra đúng file ảnh
+        if (!file.mimetype.startsWith('image')) {
+          return next(new ErrorResponse('Vui lòng chỉ upload file ảnh', 400));
         }
+  
+        // Kiểm tra dung lượng
+        if (file.size > parseInt(process.env.MAX_FILE_UPLOAD, 10)) {
+          return next(
+            new ErrorResponse(
+              `Mỗi ảnh phải nhỏ hơn ${process.env.MAX_FILE_UPLOAD / 1024 / 1024}MB`,
+              400
+            )
+          );
+        }
+  
+        // Tạo filename
+        const ext = path.parse(file.name).ext;
+        const filename = `homestay_${Date.now()}_${Math.round(Math.random() * 1e9)}${ext}`;
+  
+        // Move file
+        await file.mv(path.join(process.env.FILE_UPLOAD_PATH, filename));
+  
+        images.push(`/uploads/${filename}`);
+      }
     }
-
-    // Handle image URLs if provided in request body
+  
+    // Handle image URLs nếu có trong body (ví dụ bạn truyền URL từ client)
     if (req.body.images) {
-        const bodyImages = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
-        images.push(...bodyImages);
+      const bodyImages = Array.isArray(req.body.images)
+        ? req.body.images
+        : [req.body.images];
+      images.push(...bodyImages);
     }
-
-    // Validate that at least one image is provided
+  
+    // Nếu không có ảnh nào
     if (images.length === 0) {
-        return next(new ErrorResponse('Vui lòng cung cấp ít nhất một ảnh cho homestay', 400));
+      return next(new ErrorResponse('Vui lòng cung cấp ít nhất một ảnh cho homestay', 400));
     }
-
-    // Add images to req.body
+  
+    // Gán lại images vào req.body trước khi create
     req.body.images = images;
-
-    // Create homestay with images
+    req.body.amenities = Array.isArray(req.body['amenities[]']) 
+    ? req.body['amenities[]'] 
+    : [req.body['amenities[]']];
+    // Tạo homestay
     const homestay = await Homestay.create(req.body);
-
+  
     res.status(201).json({
-        success: true,
-        data: homestay
+      success: true,
+      data: homestay,
     });
-});
+  });
 
 // @desc    Cập nhật homestay
 // @route   PUT /api/homestays/:id
@@ -246,5 +320,56 @@ exports.getTopRatedHomestays = asyncHandler(async (req, res, next) => {
         success: true,
         count: topHomestays.length,
         data: topHomestays
+    });
+});
+
+
+// @desc    Get homestays by host ID
+// @route   GET /api/homestays/host/:hostId
+// @access  Public
+exports.getHomestaysByHost = asyncHandler(async (req, res, next) => {
+    const hostId = req.user._id;
+
+    // Get all homestays for the host
+    const homestays = await Homestay.find({ host: hostId })
+        .populate('host', 'name email');
+
+    if (!homestays || homestays.length === 0) {
+        return next(
+            new ErrorResponse(`No homestays found for host with ID ${hostId}`, 404)
+        );
+    }
+
+    // Get booking counts for each homestay from the Booking model
+    const bookingCounts = await Promise.all(
+        homestays.map(async (homestay) => {
+            const count = await Booking.countDocuments({ 
+                homestay: homestay._id,
+                paymentStatus: 'paid'
+            });
+            return {
+                homestayId: homestay._id,
+                bookingCount: count
+            };
+        })
+    );
+
+    // Create a map of homestayId to booking count for easier lookup
+    const bookingCountMap = bookingCounts.reduce((map, item) => {
+        map[item.homestayId.toString()] = item.bookingCount;
+        return map;
+    }, {});
+
+    // Transform homestays to include booking count
+    const homestaysWithBookingCount = homestays.map(homestay => {
+        const homestayObj = homestay.toObject();
+        homestayObj.bookingCount = bookingCountMap[homestay._id.toString()] || 0;
+        return homestayObj;
+    });
+
+    res.status(200).json({
+        success: true,
+        count: homestays.length,
+        data: homestaysWithBookingCount
     });
 });
