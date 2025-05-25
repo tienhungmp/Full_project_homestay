@@ -114,8 +114,6 @@ exports.getHomestay = asyncHandler(async (req, res, next) => {
 // @route   POST /api/homestays
 // @access  Private (Chỉ Host)
 exports.createHomestay = asyncHandler(async (req, res, next) => {
-    console.log("Uploaded files:", req.body);
-    // Gán host là người dùng đăng nhập
     req.body.host = req.user._id;
   
     // Kiểm tra role
@@ -189,6 +187,9 @@ exports.createHomestay = asyncHandler(async (req, res, next) => {
 // @desc    Cập nhật homestay
 // @route   PUT /api/homestays/:id
 // @access  Private (Chỉ Host sở hữu hoặc Admin)
+// @desc    Cập nhật homestay
+// @route   PUT /api/homestays/:id
+// @access  Private (Chỉ Host sở hữu hoặc Admin)
 exports.updateHomestay = asyncHandler(async (req, res, next) => {
     let homestay = await Homestay.findById(req.params.id);
 
@@ -205,6 +206,65 @@ exports.updateHomestay = asyncHandler(async (req, res, next) => {
         );
     }
 
+    // Xử lý upload ảnh mới nếu có
+    if (req.files) {
+        const images = [...homestay.images]; // Giữ lại ảnh cũ
+        
+        // Hỗ trợ cả 2 kiểu key: "images" và "images[]"
+        const uploadField = (req.files?.images) || (req.files?.['images[]']);
+        
+        if (uploadField) {
+            // Chuẩn hoá thành mảng
+            const files = Array.isArray(uploadField) ? uploadField : [uploadField];
+            
+            for (const file of files) {
+                // Kiểm tra đúng file ảnh
+                if (!file.mimetype.startsWith('image')) {
+                    return next(new ErrorResponse('Vui lòng chỉ upload file ảnh', 400));
+                }
+                
+                // Kiểm tra dung lượng
+                if (file.size > parseInt(process.env.MAX_FILE_UPLOAD, 10)) {
+                    return next(
+                        new ErrorResponse(
+                            `Mỗi ảnh phải nhỏ hơn ${process.env.MAX_FILE_UPLOAD / 1024 / 1024}MB`,
+                            400
+                        )
+                    );
+                }
+                
+                // Tạo filename
+                const ext = path.parse(file.name).ext;
+                const filename = `homestay_${Date.now()}_${Math.round(Math.random() * 1e9)}${ext}`;
+                
+                // Move file
+                await file.mv(path.join(process.env.FILE_UPLOAD_PATH, filename));
+                
+                images.push(`/uploads/${filename}`);
+            }
+        }
+        
+        // Cập nhật mảng ảnh trong req.body
+        req.body.images = images;
+    }
+    
+    // Xử lý amenities nếu có
+    if (req.body['amenities[]']) {
+        req.body.amenities = Array.isArray(req.body['amenities[]']) 
+            ? req.body['amenities[]'] 
+            : [req.body['amenities[]']];
+    }
+    
+    // Xử lý trường hợp client gửi mảng images mới (URLs)
+    if (req.body.images && !req.files) {
+        const bodyImages = Array.isArray(req.body.images)
+            ? req.body.images
+            : [req.body.images];
+            
+        req.body.images = bodyImages;
+    }
+
+    // Cập nhật homestay
     homestay = await Homestay.findByIdAndUpdate(req.params.id, req.body, {
         new: true,
         runValidators: true
@@ -371,5 +431,156 @@ exports.getHomestaysByHost = asyncHandler(async (req, res, next) => {
         success: true,
         count: homestays.length,
         data: homestaysWithBookingCount
+    });
+});
+
+
+// @desc    Check homestay availability for a specific date
+// @route   GET /api/homestays/:id/check-availability
+// @access  Public
+exports.checkHomestayAvailability = asyncHandler(async (req, res, next) => {
+    const { checkIn, checkOut, homestayId } = req.query;
+
+    if (!checkIn || !checkOut) {
+        return next(new ErrorResponse('Please provide both check-in and check-out dates', 400));
+    }
+
+    // Convert date strings to Date objects
+    const checkInDate = new Date(checkIn);
+    const checkOutDate = new Date(checkOut);
+    
+    // Validate date format
+    if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime())) {
+        return next(new ErrorResponse('Invalid date format', 400));
+    }
+
+    // Validate check-out is after check-in
+    if (checkOutDate <= checkInDate) {
+        return next(new ErrorResponse('Check-out date must be after check-in date', 400));
+    }
+
+    // Find homestay first to check if it exists
+    const homestay = await Homestay.findById(homestayId);
+    
+    if (!homestay) {
+        return next(new ErrorResponse(`Homestay not found with id ${homestayId}`, 404));
+    }
+
+    // Check for any overlapping bookings
+    const existingBooking = await Booking.findOne({
+        homestay: homestayId,
+        $or: [
+            // Check if new booking overlaps with any existing booking
+            {
+                checkInDate: { $lt: checkOutDate },
+                checkOutDate: { $gt: checkInDate }
+            }
+        ],
+        paymentStatus: 'paid'
+    });
+
+    console.log('Existing booking:', existingBooking);
+
+    res.status(200).json({
+        success: true,
+        data: {
+            isAvailable: !existingBooking,
+            checkIn: checkInDate,
+            checkOut: checkOutDate,
+            homestayId: homestayId
+        }
+    });
+});
+
+
+// @desc    Get available dates for a homestay in a specific month
+// @route   GET /api/homestays/:id/available-dates/:month
+// @access  Public
+exports.getAvailableDates = asyncHandler(async (req, res, next) => {
+    const {homestayId, monthYear} = req.query
+
+    // Validate month format
+    if (!/^\d{4}-\d{2}$/.test(monthYear)) {
+        return next(new ErrorResponse('Invalid month format. Use YYYY-MM', 400));
+    }
+
+    // Get first and last day of the month
+    const [year, month] = monthYear.split('-').map(Number);
+    const startDate = new Date(year, month - 1, 1); // Month is 0-based in JS
+    startDate.setHours(startDate.getHours() + 7); // Convert to GMT+7
+
+    const endDate = new Date(year, month, 0); // Last day of month
+    endDate.setHours(endDate.getHours() + 7); // Convert to GMT+7
+
+    // Get today's date at start of day (Vietnam time)
+    const today = new Date();
+    today.setHours(7, 0, 0, 0); // Set to 00:00:00 Vietnam time (GMT+7)
+
+    // Use today's date if startDate is before today
+    const effectiveStartDate = startDate < today ? today : startDate;
+
+    // Find homestay
+    const homestay = await Homestay.findById(homestayId);
+    if (!homestay) {
+        return next(new ErrorResponse(`Homestay not found with id ${homestayId}`, 404));
+    }
+
+    // Get all bookings for this homestay in the specified month
+    const bookings = await Booking.find({
+        homestay: homestayId,
+        paymentStatus: 'paid',
+        $or: [
+            {
+                checkInDate: { $gte: effectiveStartDate, $lte: endDate }
+            },
+            {
+                checkOutDate: { $gte: effectiveStartDate, $lte: endDate }
+            },
+            {
+                checkInDate: { $lte: effectiveStartDate },
+                checkOutDate: { $gte: endDate }
+            }
+        ]
+    }).select('checkInDate checkOutDate');
+
+    // Create array of all days in month from today onwards
+    const allDates = [];
+    let currentDate = new Date(effectiveStartDate);
+    while (currentDate <= endDate) {
+        allDates.push(new Date(currentDate));
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    // Mark booked dates
+    const bookedDates = new Set();
+    bookings.forEach(booking => {
+        let current = new Date(Math.max(booking.checkInDate, effectiveStartDate));
+        const bookingEnd = new Date(Math.min(booking.checkOutDate, endDate));
+        
+        while (current <= bookingEnd) {
+            // Convert to Vietnam timezone before formatting
+            const vietnamDate = new Date(current);
+            vietnamDate.setHours(vietnamDate.getHours() + 7);
+            bookedDates.add(vietnamDate.toISOString().split('T')[0]);
+            current.setDate(current.getDate() + 1);
+        }
+    });
+
+    // Create final array of available dates (in Vietnam timezone)
+    const availableDates = allDates
+        .map(date => {
+            const vietnamDate = new Date(date);
+            vietnamDate.setHours(vietnamDate.getHours() + 7);
+            return vietnamDate.toISOString().split('T')[0];
+        })
+        .filter(date => !bookedDates.has(date));
+
+    res.status(200).json({
+        success: true,
+        data: {
+            homestayId,
+            month: monthYear,
+            availableDates
+        }
     });
 });

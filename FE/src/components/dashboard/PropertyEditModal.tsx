@@ -14,38 +14,57 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BedDouble, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { Property } from "@/types/property";
+import { linkBackend } from "@/utils/Constant";
+import { useUpdateHomeStay } from "@/hooks/useHomestays";
+import { set } from "date-fns";
+
+const amenitiesMap = {
+  'WiFi': 'WiFi',
+  'Air Conditioning': 'Máy lạnh',
+  'TV': 'TV',
+  'Kitchen': 'Nhà bếp',
+  'Washing Machine': 'Máy giặt',
+  'Free Parking': 'Chỗ đậu xe miễn phí',
+  'Pool': 'Hồ bơi',
+  'Garden': 'Vườn',
+  'BBQ': 'Nướng BBQ',
+  'Hot Water': 'Nước nóng',
+  'Refrigerator': 'Tủ lạnh',
+  'Microwave': 'Lò vi sóng',
+  'Security Camera': 'Camera an ninh',
+  'First Aid Kit': 'Bộ sơ cứu',
+  'Fire Extinguisher': 'Bình chữa cháy'
+};
+
 
 interface PropertyEditModalProps {
   open: boolean;
   onClose: () => void;
   property: any;
   onSave: (updatedProperty: any) => void;
+  categories: any[];
 }
 
-const PropertyEditModal: React.FC<PropertyEditModalProps> = ({ open, onClose, property, onSave }) => {
+const PropertyEditModal: React.FC<PropertyEditModalProps> = ({ open, onClose, property, onSave, categories }) => {
+  const {updateHomeStay} = useUpdateHomeStay()
+  const [typeHomestay, setTypeHomestay] = useState((categories.filter((item) => item._id === property.category)[0]));
+
   const [formData, setFormData] = useState({
     name: property.name || "",
-    location: property.address || "",
+    address: property.address || "",
     price: property.price || 0,
-    type: property.type || "villa",
+    category: typeHomestay._id || "villa",
     description: property.description || "",
     numberOfRooms: property.numberOfRooms || 1,
     maxGuestsPerRoom: property.maxGuestsPerRoom || 2,
     images: property.images || [],
-    amenities: {
-      wifi: property.amenities?.wifi || false,
-      parking: property.amenities?.parking || false,
-      pool: property.amenities?.pool || false,
-      gym: property.amenities?.gym || false,
-      ac: property.amenities?.ac || false,
-      kitchen: property.amenities?.kitchen || false,
-      tv: property.amenities?.tv || false,
-      pets: property.amenities?.pets || false
-    }
+    amenities: property.amenities || [],
   });
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    console.log(name)
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -54,20 +73,26 @@ const PropertyEditModal: React.FC<PropertyEditModalProps> = ({ open, onClose, pr
     setFormData(prev => ({ ...prev, [name]: Number(value) }));
   };
 
-  const handleTypeChange = (value: string) => {
-    setFormData(prev => ({ ...prev, type: value }));
+  const handleTypeChange = (value: any) => {
+    setTypeHomestay(value);
+    setFormData(prev => ({ ...prev, category: value._id }));
   };
 
   const handleAmenityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, checked } = e.target;
+    const { value } = e.target;
+    const id = value;
     setFormData(prev => ({
       ...prev,
-      amenities: {
-        ...prev.amenities,
-        [id]: checked
-      }
+      amenities: prev.amenities.includes(id) ? prev.amenities.filter((a) => a !== id) : [...prev.amenities, id]
     }));
   };
+
+  // const handleAmenityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const value = e.target.id;
+  //   setAmenities((prev) =>
+  //     prev.includes(value) ? prev.filter((a) => a !== value) : [...prev, value]
+  //   );
+  // };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -87,15 +112,19 @@ const PropertyEditModal: React.FC<PropertyEditModalProps> = ({ open, onClose, pr
     }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const updatedProperty = {
       ...property,
       ...formData
     };
-    
-    onSave(updatedProperty);
-    toast.success("Đã cập nhật thông tin chỗ nghỉ thành công");
-    onClose();
+
+    const responseUpdate =  await updateHomeStay(updatedProperty, property._id);
+  
+    if(responseUpdate.status) {
+      onSave(updatedProperty);
+      toast.success("Đã cập nhật thông tin chỗ nghỉ thành công");
+      onClose();
+    }
   };
 
   return (
@@ -123,8 +152,8 @@ const PropertyEditModal: React.FC<PropertyEditModalProps> = ({ open, onClose, pr
             <div>
               <label className="text-sm font-medium mb-1 block">Địa điểm</label>
               <Input 
-                name="location" 
-                value={formData.location} 
+                name="address" 
+                value={formData.address} 
                 onChange={handleInputChange} 
                 placeholder="Nhập địa điểm" 
               />
@@ -142,16 +171,15 @@ const PropertyEditModal: React.FC<PropertyEditModalProps> = ({ open, onClose, pr
             </div>
             
             <div>
-              <label className="text-sm font-medium mb-1 block">Loại chỗ nghỉ</label>
-              <Select value={formData.type} onValueChange={handleTypeChange}>
+              <label className="text-sm font-medium mb-1 block">Chọn loại chỗ nghỉ</label>
+              <Select value={typeHomestay} onValueChange={handleTypeChange}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Chọn loại chỗ nghỉ" />
+                  <SelectValue placeholder={typeHomestay.name} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="villa">Villa</SelectItem>
-                  <SelectItem value="apartment">Căn hộ</SelectItem>
-                  <SelectItem value="homestay">Homestay</SelectItem>
-                  <SelectItem value="hotel">Khách sạn</SelectItem>
+                  {categories && categories.map((category) => (
+                      <SelectItem key={category._id} value={category}>{category.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -190,7 +218,7 @@ const PropertyEditModal: React.FC<PropertyEditModalProps> = ({ open, onClose, pr
               {formData.images.map((image, index) => (
                 <div key={index} className="relative">
                   <img 
-                    src={image} 
+                    src={linkBackend + image} 
                     alt={`Property ${index + 1}`} 
                     className="w-full h-32 object-cover rounded-lg"
                   />
@@ -239,76 +267,19 @@ const PropertyEditModal: React.FC<PropertyEditModalProps> = ({ open, onClose, pr
                 />
                 <label htmlFor="wifi">Wifi miễn phí</label>
               </div>
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
-                  id="parking" 
-                  checked={formData.amenities.parking}
-                  onChange={handleAmenityChange}
-                  className="rounded border-gray-300" 
-                />
-                <label htmlFor="parking">Bãi đậu xe</label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
-                  id="pool" 
-                  checked={formData.amenities.pool}
-                  onChange={handleAmenityChange}
-                  className="rounded border-gray-300" 
-                />
-                <label htmlFor="pool">Bể bơi</label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
-                  id="gym" 
-                  checked={formData.amenities.gym}
-                  onChange={handleAmenityChange}
-                  className="rounded border-gray-300" 
-                />
-                <label htmlFor="gym">Phòng gym</label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
-                  id="ac" 
-                  checked={formData.amenities.ac}
-                  onChange={handleAmenityChange}
-                  className="rounded border-gray-300" 
-                />
-                <label htmlFor="ac">Điều hòa</label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
-                  id="kitchen" 
-                  checked={formData.amenities.kitchen}
-                  onChange={handleAmenityChange}
-                  className="rounded border-gray-300" 
-                />
-                <label htmlFor="kitchen">Nhà bếp</label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
-                  id="tv" 
-                  checked={formData.amenities.tv}
-                  onChange={handleAmenityChange}
-                  className="rounded border-gray-300" 
-                />
-                <label htmlFor="tv">TV</label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
-                  id="pets" 
-                  checked={formData.amenities.pets}
-                  onChange={handleAmenityChange}
-                  className="rounded border-gray-300" 
-                />
-                <label htmlFor="pets">Cho phép thú cưng</label>
-              </div>
+              {Object.keys(amenitiesMap).map((id) => (
+                      <div key={id} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id={id + "vv"}
+                          value={id}
+                          checked={formData.amenities.includes(id)}
+                          onChange={handleAmenityChange}
+                          className="rounded border-gray-300"
+                        />
+                        <label htmlFor={id + "vv"} className="capitalize">{amenitiesMap[id]}</label>
+                      </div>
+                    ))}
             </div>
           </div>
         </div>

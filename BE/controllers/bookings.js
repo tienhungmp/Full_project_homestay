@@ -181,6 +181,7 @@ exports.paymentSuccess = asyncHandler(async (req, res, next) => {
         }
 
         booking.paymentStatus = 'paid';
+        booking.bookingStatus = 'confirmed';
         await booking.save();
 
         res.status(200).json({
@@ -554,6 +555,7 @@ exports.getHostDashboard = asyncHandler(async (req, res, next) => {
     // Get current month's bookings
     const monthlyBookings = await Booking.countDocuments({
         homestay: { $in: hostHomestayIds },
+        paymentStatus: 'paid',
         createdAt: {
             $gte: startOfMonth,
             $lte: endOfMonth
@@ -633,7 +635,8 @@ exports.getBookingsByHostId = asyncHandler(async (req, res, next) => {
 
     // Get all bookings for host's homestays
     const bookings = await Booking.find({
-        homestay: { $in: hostHomestayIds }
+        homestay: { $in: hostHomestayIds },
+        paymentStatus: 'paid'
     })
     .populate('homestay', 'name address price')
     .populate('user', 'name email')
@@ -683,6 +686,136 @@ exports.checkAvailability = asyncHandler(async (req, res, next) => {
             bookedRooms,
             availableRooms,
             date: checkDate
+        }
+    });
+});
+
+
+// @desc    Get bookings with pagination based on user role
+// @route   GET /api/bookings
+// @access  Private (User/Host)
+exports.getBookingsByRole = asyncHandler(async (req, res, next) => {
+    // Get page and limit from query, set defaults
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
+
+    let query;
+    let total;
+
+    if (req.user.role === 'admin') {
+        // For admin - get all bookings
+        query = Booking.find()
+            .populate('homestay', 'name address price')
+            .populate('user', 'name email')
+            .sort('-createdAt')
+            .skip(startIndex)
+            .limit(limit);
+
+        total = await Booking.countDocuments();
+    } else if (req.user.role === 'user') {
+        // For regular users - get their own bookings
+        query = Booking.find({ user: req.user._id })
+            .populate('homestay', 'name address price')
+            .sort('-createdAt')
+            .skip(startIndex)
+            .limit(limit);
+
+        total = await Booking.countDocuments({ user: req.user._id });
+    } else if (req.user.role === 'host') {
+        // For hosts - get bookings for their homestays
+        const hostHomestays = await Homestay.find({ host: req.user._id }).select('_id');
+        const hostHomestayIds = hostHomestays.map(h => h._id);
+
+        query = Booking.find({ homestay: { $in: hostHomestayIds } })
+            .populate('homestay', 'name address price')
+            .populate('user', 'name email')
+            .sort('-createdAt')
+            .skip(startIndex)
+            .limit(limit);
+
+        total = await Booking.countDocuments({ homestay: { $in: hostHomestayIds } });
+    } else {
+        return next(new ErrorResponse('Not authorized to access bookings', 403));
+    }
+
+    // Execute query
+    const bookings = await query;
+
+    // Pagination result
+    const pagination = {};
+
+    if (endIndex < total) {
+        pagination.next = {
+            page: page + 1,
+            limit
+        };
+    }
+
+    if (startIndex > 0) {
+        pagination.prev = {
+            page: page - 1,
+            limit
+        };
+    }
+
+    res.status(200).json({
+        success: true,
+        count: bookings.length,
+        pagination,
+        total,
+        data: bookings
+    });
+});
+
+// @desc    Get invoice information
+// @route   GET /api/bookings/invoice
+// @access  Private
+exports.getInvoiceInfo = asyncHandler(async (req, res, next) => {
+    const invoiceCode = req.query.invoiceCode;
+
+    if (!invoiceCode) {
+        return next(new ErrorResponse('Invoice code is required', 400));
+    }
+
+    // Find booking by invoice code
+    const booking = await Booking.findOne({ invoiceCode })
+        .populate('homestay', 'name address price')
+        .populate('user', 'name email');
+
+    if (!booking) {
+        return next(new ErrorResponse(`No invoice found with code ${invoiceCode}`, 404));
+    }
+
+    // Calculate number of days stayed
+    const daysOfStay = Math.ceil(
+        (new Date(booking.checkOutDate) - new Date(booking.checkInDate)) / (1000 * 60 * 60 * 24)
+    );
+
+    res.status(200).json({
+        success: true,
+        data: {
+            invoiceCode: booking.invoiceCode,
+            bookingDetails: booking,
+            homestayDetails: {
+                name: booking.homestay.name,
+                address: booking.homestay.address,
+                pricePerNight: booking.homestay.price
+            },
+            guestDetails: booking.user ? {
+                name: booking.user.name,
+                email: booking.user.email
+            } : {
+                name: booking.guestName,
+                email: booking.guestEmail,
+                phone: booking.guestPhone,
+                address: booking.guestAddress
+            },
+            paymentStatus: booking.paymentStatus,
+            bookingStatus: booking.bookingStatus,
+            createdAt: booking.createdAt,
+            daysOfStay: daysOfStay
         }
     });
 });

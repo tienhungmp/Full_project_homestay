@@ -44,21 +44,23 @@ const Navbar = () => {
           <Link to="/" className="text-sm font-medium hover:text-brand-blue transition-colors">
             Trang chủ
           </Link>
+          <Link to="/about" className="text-sm font-medium hover:text-brand-blue transition-colors">
+            Giới thiệu
+          </Link>
           <Link to="/search" className="text-sm font-medium hover:text-brand-blue transition-colors">
             Tìm kiếm
           </Link>
-          <Link to="/about" className="text-sm font-medium hover:text-brand-blue transition-colors">
-            Giới thiệu
+          <Link to="/invoice-lookup" className="text-sm font-medium hover:text-brand-blue transition-colors">
+            Tra cứu hóa đơn
           </Link>
           <Link to="/contact" className="text-sm font-medium hover:text-brand-blue transition-colors">
             Liên hệ
           </Link>
-          
-          {isAuthenticated && user?.role === 'admin' && (
+          {/* {isAuthenticated && user?.role === 'admin' && (
             <Link to="/admin" className="text-sm font-medium text-yellow-600 hover:text-yellow-700 transition-colors">
               Quản trị
             </Link>
-          )}
+          )} */}
         </nav>
         
         <div className="hidden md:flex items-center gap-2">
@@ -84,7 +86,7 @@ const Navbar = () => {
                     <Link to="/admin">Quản trị viên</Link>
                   </DropdownMenuItem>
                 )}
-                {(user?.role === 'host' || user?.role === 'admin') && (
+                {(user?.role === 'host') && (
                   <DropdownMenuItem asChild>
                     <Link to="/host">Quản lý chỗ nghỉ</Link>
                   </DropdownMenuItem>
@@ -140,7 +142,7 @@ const Navbar = () => {
                 Liên hệ
               </Link>
               
-              {isAuthenticated && user?.role === 'admin' && (
+              {/* {isAuthenticated && user?.role === 'admin' && (
                 <Link 
                   to="/admin" 
                   className="text-lg font-medium py-2 text-yellow-600 hover:text-yellow-700 transition-colors"
@@ -148,7 +150,7 @@ const Navbar = () => {
                 >
                   Quản trị
                 </Link>
-              )}
+              )} */}
               
               {isAuthenticated && (user?.role === 'host' || user?.role === 'admin') && (
                 <Link 

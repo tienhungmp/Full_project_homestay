@@ -7,10 +7,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import InvoicePreviewModal from '@/components/property/InvoicePreviewModal';
 
 
 // Payment method icons
-import { CreditCard, Wallet, Bitcoin, User, MapPin, Phone } from 'lucide-react';
+import { CreditCard, Wallet, Bitcoin, User, MapPin, Phone, Receipt } from 'lucide-react';
 import { useCreatePaymentUrl } from '@/hooks/useOrder';
 
 interface BookingDetails {
@@ -33,11 +34,13 @@ const PaymentMethod = () => {
   const navigate = useNavigate();
   const [selectedMethod, setSelectedMethod] = useState<string>('credit_card');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showInvoicePreview, setShowInvoicePreview] = useState(false);
 
   const {createPaymentUrl} = useCreatePaymentUrl()
    
   // Get booking details from location state
   const bookingDetails = location.state?.bookingDetails as BookingDetails | undefined;
+  console.log(bookingDetails)
   
   if (!bookingDetails) {
     return (
@@ -185,6 +188,16 @@ const PaymentMethod = () => {
               </Card>
               
               <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setShowInvoicePreview(true)}
+                disabled={isProcessing}
+              >
+                <Receipt className="h-4 w-4 mr-2" />
+                Xem trước hóa đơn
+              </Button>
+              
+              <Button
                 className="w-full bg-brand-blue hover:bg-brand-blue/90"
                 onClick={handlePaymentSubmit}
                 disabled={isProcessing}
@@ -205,6 +218,12 @@ const PaymentMethod = () => {
         </div>
       </main>
       <Footer />
+      <InvoicePreviewModal
+        isOpen={showInvoicePreview}
+        onClose={() => setShowInvoicePreview(false)}
+        bookingDetails={bookingDetails}
+        selectedPaymentMethod={selectedMethod}
+      />
     </div>
   );
 };

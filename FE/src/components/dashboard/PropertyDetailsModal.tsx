@@ -189,7 +189,7 @@ const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
                     onSelect={setSelectedDate}
                     initialFocus
                     fromDate={new Date()} // Only allow dates from today
-                    disabled={(date) => date < new Date()} // Disable past dates
+                    // disabled={(date) => date <= new Date()} // Disable past dates
                   />
                 </PopoverContent>
               </Popover>
@@ -223,7 +223,7 @@ const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Trạng thái:</span>
-                    {currentAvailability.available > 0 ? (
+                    {infoRoom.availableRooms > 0 ? (
                       <Badge className="bg-green-100 text-green-800">Còn phòng</Badge>
                     ) : (
                       <Badge className="bg-red-100 text-red-800">Hết phòng</Badge>

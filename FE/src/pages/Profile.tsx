@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -25,6 +25,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useGetBookingsByRole } from "@/hooks/useOrder";
 
 // Mock booking data
 const mockBookings = [
@@ -107,18 +108,30 @@ const getStatusColor = (status: string) => {
   switch (status) {
     case 'completed':
       return 'bg-green-500 hover:bg-green-600';
+    case 'confirmed':
+      return 'bg-blue-500 hover:bg-blue-600';
+    case 'pending':
+      return 'bg-yellow-500 hover:bg-yellow-600';
     case 'cancelled':
       return 'bg-red-500 hover:bg-red-600';
-    case 'upcoming':
-      return 'bg-blue-500 hover:bg-blue-600';
     default:
       return 'bg-gray-500 hover:bg-gray-600';
   }
 };
 
+// Status mapping to Vietnamese
+const statusMapping = {
+  'pending': 'Đang chờ',
+  'confirmed': 'Đã xác nhận',
+  'cancelled': 'Đã hủy',
+  'completed': 'Hoàn thành'
+};
+
 const Profile = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const {getBookingsByRole} = useGetBookingsByRole();
+  const [bookings, setBookings] = useState<any[]>([]); // State to hold booking
 
   const handleLogout = () => {
     logout();
@@ -130,6 +143,14 @@ const Profile = () => {
   const maxTableHeight = needsScrolling ? "400px" : "auto";
   const maxCardsHeight = needsScrolling ? "500px" : "auto";
 
+  useEffect(() => {
+    const fetchData = async () => {
+      const responseBooking = await getBookingsByRole();
+      setBookings(responseBooking.data.data)
+      console.log(responseBooking.data.data)  
+    }
+    fetchData();
+  },[])
   return (
     <ProtectedRoute>
       <div className="min-h-screen flex flex-col">
@@ -219,7 +240,7 @@ const Profile = () => {
                   <CardDescription>Xem thông tin các đơn đặt phòng của bạn</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {mockBookings.length > 0 ? (
+                  {bookings.length > 0 ? (
                     <div className="space-y-4">
                       {/* Desktop view with table */}
                       <div className="hidden md:block">
@@ -236,16 +257,15 @@ const Profile = () => {
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {mockBookings.map((booking) => (
-                                <TableRow key={booking.id}>
-                                  <TableCell className="font-medium">{booking.id}</TableCell>
-                                  <TableCell>{booking.propertyName}</TableCell>
-                                  <TableCell>{booking.checkIn} - {booking.checkOut}</TableCell>
+                              {bookings.map((booking) => (
+                                <TableRow key={booking.invoiceCode}>
+                                  <TableCell className="font-medium">{booking.invoiceCode}</TableCell>
+                                  <TableCell>{booking.homestay.address}</TableCell>
+                                  <TableCell>{new Date(booking.checkInDate).toLocaleDateString('vi-VN')} - {new Date(booking.checkOutDate).toLocaleDateString('vi-VN')}</TableCell>
                                   <TableCell>{booking.totalPrice.toLocaleString('vi-VN')}đ</TableCell>
                                   <TableCell>
-                                    <Badge className={getStatusColor(booking.status)}>
-                                      {booking.status === 'completed' ? 'Hoàn thành' : 
-                                       booking.status === 'cancelled' ? 'Đã hủy' : 'Sắp tới'}
+                                    <Badge className={getStatusColor(booking.bookingStatus)}>
+                                          {statusMapping[booking.bookingStatus]}
                                     </Badge>
                                   </TableCell>
                                   <TableCell>

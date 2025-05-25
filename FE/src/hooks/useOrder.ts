@@ -150,3 +150,35 @@ export const useGetOrderById = () => {
       error,
     };
   }
+
+  export const useGetBookingsByRole = () => {
+    const { fetchData, isLoading, error } = useApi();
+  
+    const getBookingsByRole  = async (page?: number, number?: number) => {
+      const response = await fetchData<any>(`/bookings/get-booking-by-role?page=${page}&number=${number}`);
+      return response;
+    };
+  
+    return {
+      getBookingsByRole,
+      isLoading,
+      error,
+    };
+  }
+
+
+  export const useGetInvoiceByCode = () => {
+    const { fetchData, isLoading, error } = useApi();
+  
+    const getInvoiceByCode  = async (invoiceCode: string) => {
+      const encodedCode = encodeURIComponent(invoiceCode);
+      const response = await fetchData<any>(`/bookings/search-invoice?invoiceCode=${encodedCode}`);
+      return response;
+    };
+  
+    return {
+      getInvoiceByCode,
+      isLoading,
+      error,
+    };
+  }

@@ -185,7 +185,7 @@ exports.deleteReview = asyncHandler(async (req, res, next) => {
 // @access  Public
 exports.getReviewsByHost = asyncHandler(async (req, res, next) => {
     const homestays = await Homestay.find({ host: req.user._id })
-        .select('_id name address');
+        .select('_id name address averageRating');
     
     // Get all homestay IDs
     const homestayIds = homestays.map(homestay => homestay._id);

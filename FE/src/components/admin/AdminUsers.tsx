@@ -115,7 +115,7 @@ export function AdminUsers() {
                     <SelectValue placeholder="Tất cả vai trò" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Tất cả vai trò</SelectItem>
+                    <SelectItem value="all">Tất cả vai trò</SelectItem>
                     <SelectItem value="user">Người dùng</SelectItem>
                     <SelectItem value="host">Chủ nhà</SelectItem>
                     <SelectItem value="admin">Quản trị viên</SelectItem>

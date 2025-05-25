@@ -21,7 +21,6 @@ interface SearchResultsProps {
   selectedTypes?: string[];
   selectedAmenities?: string[];
   minRating?: number;
-  averageRating: number;
   toggleFilter: boolean;
 }
 

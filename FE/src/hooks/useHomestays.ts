@@ -50,7 +50,6 @@ export const useGetHomestayById = () => {
   const getHomestayById = async (orderId: string) => {
     const response = await fetchData<any>(`/homestays/${orderId}`);
     if (response.success && response.data) {
-      console.log(response.data)
       setHomestay(response.data.data);
     }
     return response;
@@ -72,7 +71,6 @@ export const useGetHomestayTopRate = () => {
   const getHomestayTopRate = async () => {
     const response = await fetchData<any>(`/homestays/top-rated`);
     if (response.success && response.data) {
-      console.log(response.data)
       setHomestays(response.data.data);
     }
     return response;
@@ -127,6 +125,31 @@ export const useCreateHomestay = () => {
   };
 };
 
+export const useUpdateHomeStay = () => {
+  const { updateData, isLoading, error } = useApi();
+
+  const updateHomeStay = async (homestayData: any, homestayId: string) => {
+    const config: AxiosRequestConfig = {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    };
+
+    const response = await updateData<any>(
+      `/homestays/${homestayId}`,
+        homestayData,
+        config
+    );
+    return response;
+  };
+
+  return {
+    updateHomeStay,
+    isLoading,
+    error,
+  };
+};
+
 export const useDeleteHomestay = () => {
   const { deleteData, isLoading, error } = useApi();
 
@@ -141,3 +164,31 @@ export const useDeleteHomestay = () => {
     error, 
   }
 }
+
+export const useCheckHomestayAvailability = () => {
+  const { fetchData, isLoading, error } = useApi();
+  const getCheckHomestayAvailability = async (checkIn: Date, checkOut: Date, homestayId: string) => {
+    const response = await fetchData<any>(`/homestays/check-availability?checkIn=${checkIn}&checkOut=${checkOut}&homestayId=${homestayId}`);
+    return response;
+  };
+
+  return {
+    getCheckHomestayAvailability,
+    isLoading,
+    error,
+  };
+};
+
+export const useCheckAvailableDates = () => {
+  const { fetchData, isLoading, error } = useApi();
+  const checkAvailableDates = async (homestayId: string, monthYear: string) => {
+    const response = await fetchData<any>(`homestays/available-dates?homestayId=${homestayId}&monthYear=${monthYear}`);
+    return response;
+  };
+
+  return {
+    checkAvailableDates,
+    isLoading,
+    error,
+  };
+};

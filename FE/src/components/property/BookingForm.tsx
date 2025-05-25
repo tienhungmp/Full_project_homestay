@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { useOrder, useOrderWithoutAccount } from '@/hooks/useOrder';
 import { BookingRequest, OrderRequest } from '@/types/order';
 import BookingInfoModal, { BookingInfoFormValues } from './BookingInfoModal';
+import AvailabilityCheckModal from './AvailabilityCheckModal';
 
 interface BookingFormProps {
   price: number;
@@ -26,6 +27,7 @@ const BookingForm = ({ price, rating, maxGuests, propertyId, propertyName }: Boo
   const [guestCount, setGuestCount] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showGuestInfoModal, setShowGuestInfoModal] = useState(false);
+  const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
   const [guestInfo, setGuestInfo] = useState<BookingInfoFormValues | null>(null);
   
   
@@ -112,12 +114,6 @@ const BookingForm = ({ price, rating, maxGuests, propertyId, propertyName }: Boo
 
     // If not authenticated, redirect to login
     if (!isAuthenticated) {
-      // toast.info('Vui lòng đăng nhập để đặt phòng', {
-      //   action: {
-      //     label: 'Đăng nhập',
-      //     onClick: () => navigate('/login', { state: { from: `/property/${propertyId}` } })
-      //   }
-      // });
       setShowGuestInfoModal(true);
       return;
     }
@@ -264,13 +260,23 @@ const BookingForm = ({ price, rating, maxGuests, propertyId, propertyName }: Boo
           </div>
         </div>
         
-        <Button 
-          className="w-full bg-brand-blue hover:bg-brand-blue/90 mb-4"
-          disabled={!checkIn || !checkOut || isSubmitting || isLoading}
-          onClick={handleBookingSubmit}
-        >
-          {isSubmitting ? 'Đang xử lý...' : 'Đặt phòng'}
-        </Button>
+        <div className="flex gap-2 mb-4">
+          <Button 
+            className="flex-1 bg-brand-blue hover:bg-brand-blue/90"
+            disabled={!checkIn || !checkOut || isSubmitting || isLoading}
+            onClick={handleBookingSubmit}
+          >
+            {isSubmitting ? 'Đang xử lý...' : 'Đặt phòng'}
+          </Button>
+          
+          <Button 
+            variant="outline"
+            className="flex-1"
+            onClick={() => setShowAvailabilityModal(true)}
+          >
+            Kiểm tra
+          </Button>
+        </div>
         
         {nights > 0 ? (
           <div className="space-y-3 text-sm">
@@ -301,6 +307,14 @@ const BookingForm = ({ price, rating, maxGuests, propertyId, propertyName }: Boo
         open={showGuestInfoModal}
         onClose={() => setShowGuestInfoModal(false)}
         onSubmit={handleGuestInfoSubmit}
+      />
+      
+      {/* Availability check modal */}
+      <AvailabilityCheckModal
+        open={showAvailabilityModal}
+        onClose={() => setShowAvailabilityModal(false)}
+        propertyId={propertyId}
+        propertyName={propertyName}
       />
     </div>
   );

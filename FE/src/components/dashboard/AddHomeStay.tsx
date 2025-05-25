@@ -61,6 +61,8 @@ import { toast } from "sonner";
 
 interface PropertyAddHomeStayProps {
   categories: any[];
+  setEventAddHomestay: (isSubmit: boolean) => void;
+  eventAddHomestay: boolean
 }
 
 const amenitiesMap = {
@@ -167,6 +169,7 @@ export default function AddHomeStay(props: PropertyAddHomeStayProps) {
       
       const response = await createHomestay(formData);
       if(response.success) {
+        props.setEventAddHomestay(!props.eventAddHomestay)
         toast.success("Thêm homestay thành công");
       } else {
         toast.error("Có lỗi gì đó rồi");

@@ -90,7 +90,6 @@ const PropertyDetail = () => {
     getHomestayById(id);
   }, []);
 
-  console.log(homestay);
   return (
     <>
       {homestay && (
@@ -105,7 +104,7 @@ const PropertyDetail = () => {
             />
 
             <PropertyGallery
-              images={property.images}
+              images={homestay.images}
               propertyName={homestay.name}
             />
 

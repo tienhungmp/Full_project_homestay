@@ -33,6 +33,10 @@ const BookingSchema = new mongoose.Schema({
     enum: ['pending', 'paid', 'failed', 'refunded'],
     default: 'pending',
   },
+  invoiceCode: {
+    type: String,
+    unique: true,
+  },
   bookingStatus: {
     type: String,
     enum: ['pending', 'confirmed', 'cancelled', 'completed'],
@@ -75,6 +79,31 @@ BookingSchema.pre('validate', function(next) {
   } else {
     next();
   }
+});
+
+BookingSchema.pre('save', async function (next) {
+  if (!this.isNew) return next();
+
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+  function generateCode() {
+    let code = '';
+    for (let i = 0; i < 4; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return '#IV' + code;
+  }
+
+  let code;
+  let exists = true;
+
+  do {
+    code = generateCode();
+    exists = await mongoose.models.Booking.exists({ invoiceCode: code });
+  } while (exists);
+
+  this.invoiceCode = code;
+  next();
 });
 
 BookingSchema.virtual('createdAtFormatted').get(function () {

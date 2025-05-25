@@ -21,6 +21,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import ScrollToTop from "./utils/ScrollToTop";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import BookingHistory from "./pages/BookingHistory";
+import InvoiceLookup from "./pages/InvoiceLookup";
 
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/admin" element={<Admin />} />
             <Route path="/host" element={<HostDashboard />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/invoice-lookup" element={<InvoiceLookup />} />
             <Route path="/booking-history" element={
               <ProtectedRoute>
                 <BookingHistory />

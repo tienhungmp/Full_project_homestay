@@ -84,7 +84,7 @@ const HostDashboard = () => {
   const [reviewsUser, setReviewsUser] = useState<any[]>();
   const [homestayReviews, setHomestayReviews] = useState<any[]>([]);
   const [infoHostDashboard, setInfoHostDashboard] = useState<any>();  
-  const [viewingProperty, setViewingProperty] = useState<typeof properties[0] | null>(null);
+  const [viewingProperty, setViewingProperty] = useState<any>(null);
   const [bookings, setBookings] = useState<any[]>([])
   const [homestays, setHomestays] = useState<any[]>([])
   const [categories, setCategories] = useState<any[]>([])
@@ -96,6 +96,7 @@ const HostDashboard = () => {
   const {getCategories} = useCategories();
   const {updateOrderStatus} = useUpadteStatusOrder();
   const [editingProperty, setEditingProperty] = useState<typeof properties[0] | null>(null);
+  const [eventAddHomestay, setEventAddHomestay] = useState<boolean>(false);
   // Handle property operations
   const handleAddProperty = () => {
     toast.success("Chức năng thêm chỗ nghỉ mới sẽ được cập nhật sau!");
@@ -106,15 +107,11 @@ const HostDashboard = () => {
   };
 
   const handleSaveEditedProperty = (updatedProperty: typeof properties[0]) => {
-    // In a real app, you would send an API request to update the property
-    // For now, we'll just update it in our local data
-    const updatedProperties = properties.map(prop => 
-      prop.id === updatedProperty.id ? updatedProperty : prop
-    );
-    // Here we would typically update the state with the new properties
     toast.success(`Đã cập nhật thông tin chỗ nghỉ: ${updatedProperty.name}`);
     setEditingProperty(null);
   };
+
+  console.log(homestayReviews)
 
   const handleDeleteProperty = async (id: string) => {
     const responseDelete =  await deleteHomestay(id);
@@ -201,7 +198,7 @@ const HostDashboard = () => {
   // Filter bookings
   const filteredBookings = bookings.length > 0 ? bookings.filter(booking => {
     const matchesSearch = booking.homestay.name.toLowerCase().includes(bookingSearchQuery.toLowerCase()) ||
-                          (' #' + booking.id.slice(-6)).toLowerCase().includes(bookingSearchQuery.toLowerCase());
+                          (booking.invoiceCode).toLowerCase().includes(bookingSearchQuery.toLowerCase());
     const matchesStatus = bookingStatus ? booking.bookingStatus === bookingStatus : true;
     return matchesSearch && matchesStatus;
   }): bookings;
@@ -215,19 +212,19 @@ const HostDashboard = () => {
       const responseReviews = await getGetReviewsByHostId();
       const responseInfoHostDashboard = await getGetInfoHostDashboard();
       const responseAllBookingOfHost = await getAllBookingOfHost();
-      const responseAlllHomestayByHost = await getAllHomestayByHost();
+      const responseAllHomestayByHost = await getAllHomestayByHost();
       const responseCategories = await getCategories();
       if(responseReviews.success && responseInfoHostDashboard.success) {
         setReviewsUser(responseReviews.data.data);
         setInfoHostDashboard(responseInfoHostDashboard.data.data);
         setHomestayReviews(responseReviews.data.homestays);
         setBookings(responseAllBookingOfHost.data.data);
-        setHomestays(responseAlllHomestayByHost.data.data);
+        setHomestays(responseAllHomestayByHost.data.data);
         setCategories(responseCategories.data.data)
       }
     };
     fetchData();
-  }, [])
+  }, [eventAddHomestay])
   return (
     <ProtectedRoute allowedRoles={['host', 'admin']}>
       <div className="min-h-screen flex flex-col">
@@ -355,7 +352,7 @@ const HostDashboard = () => {
                       <TableBody>
                         {filteredProperties.map((property) => (
                           <TableRow key={property._id}>
-                            <TableCell>#{property._id.slice(-6).toUpperCase()}</TableCell>
+                            <TableCell>#{property._id.slice(-6)}</TableCell>
                             <TableCell className="font-medium">{property.name}</TableCell>
                             <TableCell>{property.address}</TableCell>
                             <TableCell>{property.price.toLocaleString()}</TableCell>
@@ -411,10 +408,11 @@ const HostDashboard = () => {
                   onClose={() => setEditingProperty(null)}
                   property={editingProperty}
                   onSave={handleSaveEditedProperty}
+                  categories={categories}
                 />
               )}
 
-            <AddHomeStay categories={categories} />
+            <AddHomeStay categories={categories} setEventAddHomestay = {setEventAddHomestay}  eventAddHomestay = {eventAddHomestay} />
             </TabsContent>
 
             {/* Bookings Content */}
@@ -466,7 +464,7 @@ const HostDashboard = () => {
                       <TableBody>
                         {filteredBookings.map((booking) => (
                           <TableRow key={booking.id}>
-                            <TableCell className="font-medium">#{booking.id.slice(-6).toUpperCase()}</TableCell>
+                            <TableCell className="font-medium">{booking.invoiceCode}</TableCell>
                             <TableCell>{booking.homestay.name}</TableCell>
                             <TableCell>{booking.user ? booking.user.name : booking.guestName}</TableCell>
                             <TableCell>{new Date(booking.checkInDate).toLocaleString('vi-VN', {
@@ -621,7 +619,7 @@ const HostDashboard = () => {
                           <p className="text-sm text-gray-500">{homestay.address}</p>
                         </div>
                         <div className="flex items-center bg-white px-3 py-1 rounded-full">
-                          <span className="mr-1 font-medium">4.{Math.floor(Math.random() * 9) + 1}</span>
+                          <span className="mr-1 font-medium">{homestay.averageRating}</span>
                           <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
                         </div>
                       </div>
