@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Check, Home } from 'lucide-react';
+import { AlertCircle, Check, Copy, Home } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useGetOrderById, useUpadteStatusPaymentOrder } from '@/hooks/useOrder';
+import { statusBookingTranferLanguageVn, statusPaymentTranferLanguageVn } from '@/utils/Constant';
 
 const PaymentSuccess = () => {
   const location = useLocation();
@@ -65,15 +66,35 @@ const PaymentSuccess = () => {
             <h1 className="text-3xl font-bold text-green-600 mb-2">Thanh toán thành công!</h1>
             <p className="text-gray-600">Cảm ơn bạn đã đặt phòng tại StayEasy</p>
           </div>
-
+          <Card className="border-blue-200 bg-green-200 mb-7">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 text-green-800">
+                  <AlertCircle className="h-5 w-5" />
+                  <div>
+                    <h3 className="font-semibold">Lưu ý</h3>
+                    <p className="text-sm mt-1">
+                        Vui lòng sao lưu mã hóa đơn để tra cứu thông tin sau này
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           <Card className="mb-8">
             <CardContent className="pt-6">
               <h2 className="text-lg font-semibold mb-4">Thông tin đặt phòng</h2>
               <div className="space-y-4">
-                <div className="flex justify-between pb-2 border-b">
-                  <span className="text-muted-foreground">Mã đặt phòng</span>
-                  <span className="font-medium">{data._id}</span>
+              <div className="flex justify-between pb-2 border-b items-center">
+                <span className="text-muted-foreground">Mã hóa đơn</span>
+                <div className="flex items-center space-x-2">
+                  <span className="font-medium">{data.invoiceCode}</span>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(data.invoiceCode)}
+                    className="text-blue-500 hover:underline text-sm"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
                 </div>
+              </div>
                 <div className="flex justify-between pb-2 border-b">
                   <span className="text-muted-foreground">Tên chỗ ở</span>
                   <span className="font-medium">{data.homestay?.name}</span>
@@ -106,11 +127,11 @@ const PaymentSuccess = () => {
                 </div>
                 <div className="flex justify-between pb-2 border-b">
                   <span className="text-muted-foreground">Trạng thái đơn hàng</span>
-                  <span className="font-medium">{data.bookingStatus}</span>
+                  <span className="font-medium">{statusBookingTranferLanguageVn[data.bookingStatus]}</span>
                 </div>
                 <div className="flex justify-between pb-2 border-b">
                   <span className="text-muted-foreground">Trạng thái thanh toán</span>
-                  <span className="font-medium">{data.paymentStatus}</span>
+                  <span className="font-medium">{statusPaymentTranferLanguageVn[data.paymentStatus]}</span>
                 </div>
                 <div className="flex justify-between font-bold">
                   <span>Tổng thanh toán</span>
