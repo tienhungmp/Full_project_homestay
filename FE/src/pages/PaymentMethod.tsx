@@ -115,13 +115,21 @@ const PaymentMethod = () => {
                 <Card className="col-span-2">
                   <CardContent className="pt-6">
                     <div className="mb-6">
-                      <h2 className="text-lg font-semibold mb-2">
-                        Thông tin đặt phòng
-                      </h2>
-                      <p className="text-muted-foreground">
+                      <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-lg font-semibold">
+                          Thông tin đặt phòng
+                        </h2>
+                        <p className="text-lg font-medium">
+                          Mã hóa đơn:
+                          <span className="font-medium ml-1">
+                              {booking.invoiceCode}
+                          </span>
+                        </p>
+                      </div>
+                      <p className="text-muted-foreground mb-2">
                         {booking.homestay.name}
                       </p>
-                      <div className="flex justify-between items-center mt-2">
+                      <div className="flex justify-between items-center">
                         <div>
                           <p className="text-sm mt-2">
                             Nhận phòng:{" "}
