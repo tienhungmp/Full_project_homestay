@@ -48,7 +48,6 @@ exports.getReview = asyncHandler(async (req, res, next) => {
 // @route   POST /api/homestays/:homestayId/reviews
 // @access  Private (User)
 exports.addReview = asyncHandler(async (req, res, next) => {
-    console.log(req.user);
     const {userId, homestayId, textReview, rating} = req.body;
 
     const homestay = await Homestay.findById(homestayId);

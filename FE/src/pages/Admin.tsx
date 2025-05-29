@@ -19,8 +19,6 @@ const Admin = () => {
     navigate("/login");
   };
 
-  console.log(user?.role)
-
   // Using the role-based access control
   if (isAuthenticated && user && user.role !== 'admin') {
     return (

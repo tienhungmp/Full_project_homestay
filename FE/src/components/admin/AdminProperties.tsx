@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useEffect } from "react";
 import { 
   Table, 
   TableBody, 
@@ -17,16 +16,38 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Plus } from "lucide-react";
+import { useGetAllHomestay } from "@/hooks/userAdminAnalys";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 export function AdminProperties() {
-  // Sample data - in a real app, this would come from an API
-  const properties = [
-    { id: 1, name: "Khách sạn Panorama", location: "Đà Nẵng", rooms: 42, rating: 4.8, status: "active" },
-    { id: 2, name: "Homestay Mountainview", location: "Đà Lạt", rooms: 15, rating: 4.5, status: "active" },
-    { id: 3, name: "Resort Ocean Pearl", location: "Phú Quốc", rooms: 86, rating: 4.9, status: "active" },
-    { id: 4, name: "Khách sạn Sunlight", location: "Nha Trang", rooms: 34, rating: 4.2, status: "maintenance" },
-    { id: 5, name: "Villa Green Garden", location: "Hội An", rooms: 8, rating: 4.7, status: "active" },
-  ];
+  const [homestays, setHomestays] = React.useState<any>()
+  const [currentPage, setCurrentPage] = React.useState(1)
+  const [totalPages, setTotalPages] = React.useState(1)
+  const itemsPerPage = 10
+  const {getAllHomestay} = useGetAllHomestay()
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const res = await getAllHomestay()
+      setHomestays(res.data.data.homestays)
+      setTotalPages(Math.ceil(res.data.data.homestays.length / itemsPerPage))
+    }
+    fetchData()
+  }, [])
+
+  const getCurrentPageData = () => {
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    return homestays?.slice(startIndex, endIndex) || []
+  }
 
   return (
     <div className="space-y-6">
@@ -66,18 +87,18 @@ export function AdminProperties() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {properties.map((property) => (
-                <TableRow key={property.id}>
-                  <TableCell>{property.id}</TableCell>
+              {getCurrentPageData().map((property) => (
+                <TableRow key={property._id}>
+                  <TableCell>#{property._id.slice(-4).toUpperCase()}</TableCell>
                   <TableCell className="font-medium">{property.name}</TableCell>
-                  <TableCell>{property.location}</TableCell>
-                  <TableCell>{property.rooms}</TableCell>
-                  <TableCell>{property.rating}</TableCell>
+                  <TableCell>{property.address}</TableCell>
+                  <TableCell>{property.numberOfRooms}</TableCell>
+                  <TableCell>{property.averageRating}</TableCell>
                   <TableCell>
                     <span className={`px-2 py-1 rounded-full text-xs ${
-                      property.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+                      property.status === 'hoạt động' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
                     }`}>
-                      {property.status === 'active' ? 'Hoạt động' : 'Bảo trì'}
+                      {property.status === 'hoạt động' ? 'Hoạt động' : 'Bảo trì'}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -90,6 +111,35 @@ export function AdminProperties() {
               ))}
             </TableBody>
           </Table>
+          
+          <div className="mt-4 flex justify-center">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                  />
+                </PaginationItem>
+                {[...Array(totalPages)].map((_, index) => (
+                  <PaginationItem key={index + 1}>
+                    <PaginationLink
+                      onClick={() => setCurrentPage(index + 1)}
+                      isActive={currentPage === index + 1}
+                    >
+                      {index + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
         </CardContent>
       </Card>
     </div>

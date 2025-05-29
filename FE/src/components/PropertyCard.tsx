@@ -13,7 +13,7 @@ interface PropertyCardProps {
   price: number;
   averageRating: number;
   images: string;
-  type: string;
+  category: any;
 }
 
 const PropertyCard: React.FC<PropertyCardProps> = ({
@@ -23,9 +23,8 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
   price,
   averageRating,
   images,
-  type
+  category
 }) => {
-
   return (
     <Link to={`/property/${_id}`}>
       <Card className="property-card overflow-hidden h-full">
@@ -38,7 +37,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
           <Badge 
             className="absolute top-3 left-3 bg-brand-blue hover:bg-brand-blue"
           >
-            {type}
+            {category.name}
           </Badge>
         </div>
         <CardContent className="pt-4">

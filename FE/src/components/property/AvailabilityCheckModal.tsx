@@ -60,7 +60,6 @@ const AvailabilityCheckModal = ({ open, onClose, propertyId, propertyName }: Ava
 
   // Get available dates for the selected month
   const getAvailableDatesForMonth = async (monthDate: Date) => {
-    console.log(format(monthDate, 'yyyy-MM'))
     setIsChecking(true);
     const responseCheck = await checkAvailableDates(propertyId, format(monthDate, 'yyyy-MM'))
     if(responseCheck.success) {

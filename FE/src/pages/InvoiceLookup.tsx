@@ -9,6 +9,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useToast } from "@/hooks/use-toast";
 import { useGetInvoiceByCode } from '@/hooks/useOrder';
+import {QRCodeCanvas} from 'qrcode.react'
 
 // Mock invoice data - in real app this would come from API
 const mockInvoices = {
@@ -275,9 +276,37 @@ const InvoiceLookup = () => {
                       <span className="text-muted-foreground">Phương thức thanh toán</span>
                       <span className="font-medium">Thẻ Tín Dụng</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Trạng thái</span>
-                      <span className="font-medium text-green-600">{invoice.bookingDetails.paymentStatus}</span>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Trạng thái</span>
+                        <span className={`font-medium ${
+                          invoice.bookingDetails.paymentStatus === 'pending' 
+                            ? 'text-yellow-600'
+                            : 'text-green-600'
+                        }`}>
+                          {invoice.bookingDetails.paymentStatus}
+                        </span>
+                      </div>
+                      
+                      {invoice.bookingDetails.paymentStatus === 'pending' && (
+                        <div className="flex flex-col items-center gap-3 p-4 bg-yellow-50 rounded-lg">
+                          <p className="text-sm text-yellow-700 font-medium">Quét mã QR hoặc click vào link để thanh toán</p>
+                          <QRCodeCanvas
+                            value={"http://localhost:8080/payment-method?id=" + invoice.bookingDetails._id}
+                            size={256}
+                            level="H" // mức độ lỗi: L, M, Q, H
+                            includeMargin={true}
+                          />
+                          <a 
+                            href={"http://localhost:8080/payment-method?id=" + invoice.bookingDetails._id}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-brand-blue hover:underline text-sm"
+                          >
+                            Thanh toán qua link
+                          </a>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

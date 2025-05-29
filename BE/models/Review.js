@@ -35,7 +35,12 @@ const ReviewSchema = new mongoose.Schema({
     type: String,
     enum: ['positive', 'negative', 'neutral'],
     default: 'neutral' 
-  }
+  },
+  status: {
+    type: String,
+    enum: ['active', 'inactive'],
+    default: 'active'
+  },
 });
 
 // Cập nhật điểm trung bình đánh giá

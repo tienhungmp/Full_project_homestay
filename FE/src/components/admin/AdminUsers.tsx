@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { 
   Table, 
   TableBody, 
@@ -20,8 +19,7 @@ import {
   Search, 
   UserPlus, 
   Filter, 
-  UserCheck,
-  ShieldAlert
+  UserCheck
 } from "lucide-react";
 import {
   Select,
@@ -30,24 +28,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { toast } from "sonner";
+import { useGetAllUser } from "@/hooks/userAdminAnalys";
 
 export function AdminUsers() {
-  // Sample data - in a real app, this would come from an API
-  const [users, setUsers] = useState([
-    { id: 1, name: "Nguyễn Văn A", email: "nguyenvana@example.com", role: "user", joinDate: "15/02/2023", status: "active" },
-    { id: 2, name: "Trần Thị B", email: "tranthib@example.com", role: "user", joinDate: "22/03/2023", status: "active" },
-    { id: 3, name: "Lê Văn C", email: "levanc@example.com", role: "admin", joinDate: "10/01/2023", status: "active" },
-    { id: 4, name: "Phạm Thị D", email: "phamthid@example.com", role: "user", joinDate: "05/04/2023", status: "inactive" },
-    { id: 5, name: "Hoàng Văn E", email: "hoangvane@example.com", role: "host", joinDate: "18/05/2023", status: "active" },
-    { id: 6, name: "Đỗ Văn F", email: "dovanf@example.com", role: "user", joinDate: "30/06/2023", status: "active" },
-    { id: 7, name: "Vũ Thị G", email: "vuthig@example.com", role: "host", joinDate: "12/07/2023", status: "active" },
-  ]);
-
+  const [users, setUsers] = useState([]);
   const [selectedRole, setSelectedRole] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const {getAllUser} = useGetAllUser();
 
-  // Handle role change
   const handleChangeRole = (userId: number, newRole: string) => {
     setUsers(users.map(user => 
       user.id === userId ? { ...user, role: newRole } : user
@@ -56,7 +55,6 @@ export function AdminUsers() {
     toast.success(`Đã chuyển vai trò người dùng thành ${newRole === 'host' ? 'Chủ nhà' : newRole === 'admin' ? 'Quản trị viên' : 'Người dùng'}`);
   };
 
-  // Handle status change (lock/unlock account)
   const handleToggleStatus = (userId: number) => {
     setUsers(users.map(user => {
       if (user.id === userId) {
@@ -72,13 +70,28 @@ export function AdminUsers() {
     toast.success(`Đã ${newStatus === 'active' ? 'kích hoạt' : 'khóa'} tài khoản người dùng`);
   };
 
-  // Filter users based on role and search query
   const filteredUsers = users.filter(user => {
-    const matchesRole = selectedRole ? user.role === selectedRole : true;
+    const matchesRole = selectedRole ? selectedRole == "all" ? true : user.role === selectedRole : true;
     const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           user.email.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesRole && matchesSearch;
   });
+
+  // Pagination calculations
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const res = await getAllUser();
+      if(res.success){
+        setUsers(res.data.data.users);
+      }
+    }
+    fetchData();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -139,9 +152,9 @@ export function AdminUsers() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredUsers.map((user) => (
+              {currentItems.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell>{user.id}</TableCell>
+                  <TableCell>#{user._id.slice(-4)}</TableCell>
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
@@ -198,6 +211,35 @@ export function AdminUsers() {
               ))}
             </TableBody>
           </Table>
+
+          <div className="flex items-center justify-between py-4">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                  />
+                </PaginationItem>
+                {[...Array(totalPages)].map((_, index) => (
+                  <PaginationItem key={index + 1}>
+                    <PaginationLink
+                      onClick={() => setCurrentPage(index + 1)}
+                      isActive={currentPage === index + 1}
+                    >
+                      {index + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
         </CardContent>
       </Card>
     </div>

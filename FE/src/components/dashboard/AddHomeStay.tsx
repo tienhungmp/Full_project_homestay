@@ -165,7 +165,6 @@ export default function AddHomeStay(props: PropertyAddHomeStayProps) {
         'amenities': amenities,
         images,
       };
-      console.log(formData)
       
       const response = await createHomestay(formData);
       if(response.success) {

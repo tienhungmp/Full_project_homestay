@@ -40,7 +40,6 @@ const Contact = () => {
   });
 
   const onSubmit = (data: z.infer<typeof contactFormSchema>) => {
-    console.log(data);
     toast.success("Cảm ơn bạn đã liên hệ với chúng tôi!");
     form.reset();
   };

@@ -68,7 +68,6 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
 }) => {
 
   const handleSubmitToggleFilter = () => {
-    console.log('toggleFilter', toggleFilter);
     setToggleFilter(!toggleFilter);
   };
   return (

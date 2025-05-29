@@ -16,7 +16,6 @@ const SearchBox = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log({ location, checkIn, checkOut, guests });
     // Handle search logic here
   };
 

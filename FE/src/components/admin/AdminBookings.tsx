@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { 
   Table, 
   TableBody, 
@@ -17,16 +16,23 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
+import { useGetAllBooking } from "@/hooks/userAdminAnalys";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 export function AdminBookings() {
-  // Sample data - in a real app, this would come from an API
-  const bookings = [
-    { id: "B12345", property: "Khách sạn Panorama", user: "Nguyễn Văn A", checkIn: "22/04/2023", checkOut: "25/04/2023", guests: 2, status: "completed" },
-    { id: "B12346", property: "Homestay Mountainview", user: "Trần Thị B", checkIn: "10/05/2023", checkOut: "12/05/2023", guests: 4, status: "confirmed" },
-    { id: "B12347", property: "Resort Ocean Pearl", user: "Lê Văn C", checkIn: "15/06/2023", checkOut: "20/06/2023", guests: 3, status: "pending" },
-    { id: "B12348", property: "Villa Green Garden", user: "Phạm Thị D", checkIn: "05/07/2023", checkOut: "10/07/2023", guests: 6, status: "canceled" },
-    { id: "B12349", property: "Khách sạn Sunlight", user: "Hoàng Văn E", checkIn: "18/07/2023", checkOut: "20/07/2023", guests: 2, status: "confirmed" },
-  ];
+  const {getAllBooking} = useGetAllBooking();
+  const [bookings, setBookings] = useState<any>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
 
   const getStatusClass = (status: string) => {
     switch(status) {
@@ -46,6 +52,24 @@ export function AdminBookings() {
       case 'canceled': return 'Đã hủy';
       default: return status;
     }
+  };
+
+  useEffect(() => {
+    getAllBooking().then((res) => {
+      const allBookings = res.data.data.bookings;
+      setTotalPages(Math.ceil(allBookings.length / itemsPerPage));
+      
+      // Calculate pagination
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const paginatedBookings = allBookings.slice(startIndex, endIndex);
+      
+      setBookings(paginatedBookings);
+    });
+  }, [currentPage]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   return (
@@ -82,17 +106,27 @@ export function AdminBookings() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {bookings.map((booking) => (
-                <TableRow key={booking.id}>
-                  <TableCell className="font-medium">{booking.id}</TableCell>
-                  <TableCell>{booking.property}</TableCell>
-                  <TableCell>{booking.user}</TableCell>
-                  <TableCell>{booking.checkIn}</TableCell>
-                  <TableCell>{booking.checkOut}</TableCell>
-                  <TableCell>{booking.guests}</TableCell>
+              {bookings && bookings.map((booking) => (
+                <TableRow key={booking._id}>
+                  <TableCell className="font-medium">{booking.invoiceCode}</TableCell>
+                  <TableCell>{booking.homestay.name}</TableCell>
+                  <TableCell>{booking.user ? booking.user.name : booking.guestName}</TableCell>
                   <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs ${getStatusClass(booking.status)}`}>
-                      {getStatusText(booking.status)}
+                    {new Date(booking.checkInDate).toLocaleString('vi-VN', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                    })}
+                  </TableCell>
+                  <TableCell>{new Date(booking.checkOutDate).toLocaleString('vi-VN', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                    })}</TableCell>
+                  <TableCell>{booking.numberOfGuests}</TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded-full text-xs ${getStatusClass(booking.bookingStatus)}`}>
+                      {getStatusText(booking.bookingStatus)}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -107,6 +141,37 @@ export function AdminBookings() {
               ))}
             </TableBody>
           </Table>
+
+          <div className="mt-4 flex justify-center">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                  />
+                </PaginationItem>
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      onClick={() => handlePageChange(page)}
+                      isActive={currentPage === page}
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
         </CardContent>
       </Card>
     </div>

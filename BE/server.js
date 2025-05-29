@@ -19,6 +19,7 @@ const bookings = require('./routes/bookings');
 const reviews = require('./routes/reviews');
 const categories = require('./routes/categories');
 const favorites = require('./routes/favorites');
+const adminAnalys = require('./routes/adminAnalys');
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.use('/api/v1/homestays', homestays);
 app.use('/api/v1/bookings', bookings);
 app.use('/api/v1/reviews', reviews);
 app.use('/api/v1/favorites', favorites);
+app.use('/api/v1/adminAnalys', adminAnalys);
 
 app.get('/', (req, res) => {
   res.send('API is running...');

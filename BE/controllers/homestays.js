@@ -8,7 +8,6 @@ const Booking = require('../models/Booking');
 // @route   GET /api/homestays
 // @access  Public
 exports.getHomestays = asyncHandler(async (req, res, next) => {
-    console.log(req.query)
 // Build filter object based on query parameters
     let filter = {};
 
@@ -43,7 +42,6 @@ exports.getHomestays = asyncHandler(async (req, res, next) => {
         filter.averageRating = { $gte: parseFloat(req.query.minRating) };
     }
 
-    console.log("Filter object:", filter);
     // Get page and limit from query params, set defaults if not provided
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 10;
@@ -53,7 +51,7 @@ exports.getHomestays = asyncHandler(async (req, res, next) => {
 
     // Get paginated homestays with host information
     const homestays = await Homestay.find(filter)
-        .populate('host', 'name email')
+        .populate('host', 'name email').populate('category')
         .skip(startIndex)
         .limit(limit);
 
@@ -374,7 +372,7 @@ exports.getTopRatedHomestays = asyncHandler(async (req, res, next) => {
     .sort({ averageRating: -1 }) // Sort by rating in descending order
     .limit(limit)
     .populate('host', 'name email')
-    .populate('reviews');
+    .populate('reviews').populate('category');
 
     res.status(200).json({
         success: true,
@@ -478,8 +476,6 @@ exports.checkHomestayAvailability = asyncHandler(async (req, res, next) => {
         ],
         paymentStatus: 'paid'
     });
-
-    console.log('Existing booking:', existingBooking);
 
     res.status(200).json({
         success: true,

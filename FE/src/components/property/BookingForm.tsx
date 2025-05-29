@@ -133,14 +133,11 @@ const BookingForm = ({ price, rating, maxGuests, propertyId, propertyName }: Boo
     };
 
     try {
-      // const response = await createData('/api/bookings', bookingData);
       const response = await createOrder(bookingData);
-      // const response = {success: true, data: {}}; // Tạm thời để test, sau đó sẽ thay thế bằng createOrder
       
       if (response.success) {
         toast.success('Đặt phòng thành công!');
         
-        // Navigate to payment method page
         navigate('/payment-method', {
           state: {
             bookingDetails: {
@@ -167,13 +164,6 @@ const BookingForm = ({ price, rating, maxGuests, propertyId, propertyName }: Boo
       setIsSubmitting(false);
     }
   };
-
-  // Reset form error on input change
-  useEffect(() => {
-    if (error) {
-      // Clear error when user changes inputs
-    }
-  }, [checkIn, checkOut, guestCount]);
 
   return (
     <div className="sticky top-20">

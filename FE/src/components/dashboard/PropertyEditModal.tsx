@@ -64,7 +64,6 @@ const PropertyEditModal: React.FC<PropertyEditModalProps> = ({ open, onClose, pr
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    console.log(name)
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 

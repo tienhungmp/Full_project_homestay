@@ -9,7 +9,7 @@ const FeaturedProperties = () => {
   useEffect(() => {
     getHomestayTopRate();
   }, []);
-
+  
   return (
     <>
       {homestays && (
@@ -29,7 +29,7 @@ const FeaturedProperties = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {homestays.map((property) => (
               <PropertyCard
-                key={property.id}
+                key={property._id}
                 {...property}
               />
             ))}

@@ -35,7 +35,6 @@ const [reviewList, setReviewList] = useState<Review[]>(
   [...reviews].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 );
 
-console.log(rating);
 
   const { id } = useParams();
 
@@ -66,7 +65,6 @@ console.log(rating);
         userId: user._id,
         homestayId: id,
       });
-      console.log(response);
 
       if (response.data.success) {
         const newReviewItem: Review = {
@@ -76,7 +74,6 @@ console.log(rating);
           createdAt: new Date().toISOString(),
           text: newReview.comment,
         };
-        console.log(newReviewItem);
         toast.success("Cảm ơn bạn đã gửi đánh giá!");
         setReviewList((prev) => [newReviewItem, ...prev]);
       } else {

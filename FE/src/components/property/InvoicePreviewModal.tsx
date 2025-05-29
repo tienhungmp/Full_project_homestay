@@ -27,7 +27,7 @@ interface BookingDetails {
 interface InvoicePreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
-  bookingDetails: BookingDetails;
+  bookingDetails: any;
   selectedPaymentMethod: string;
 }
 
@@ -65,27 +65,35 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
                 <h3 className="text-lg font-semibold">Thông tin chỗ nghỉ</h3>
               </div>
               <div className="bg-muted rounded-lg p-4">
-                <p className="font-medium text-lg">{bookingDetails.propertyName}</p>
+                <p className="font-medium text-lg">{bookingDetails.homestay.name} ({bookingDetails.invoiceCode})</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
                   <div className="flex items-center">
                     <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
                     <div>
                       <p className="text-sm text-muted-foreground">Nhận phòng</p>
-                      <p className="font-medium">{bookingDetails.checkIn}</p>
+                      <p className="font-medium"> {new Date(bookingDetails.checkInDate).toLocaleDateString('vi-VN', {
+                              day: '2-digit',
+                              month: '2-digit', 
+                              year: 'numeric'
+                            })}</p>
                     </div>
                   </div>
                   <div className="flex items-center">
                     <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
                     <div>
                       <p className="text-sm text-muted-foreground">Trả phòng</p>
-                      <p className="font-medium">{bookingDetails.checkOut}</p>
+                      <p className="font-medium">{new Date(bookingDetails.checkOutDate).toLocaleDateString('vi-VN', {
+                              day: '2-digit',
+                              month: '2-digit', 
+                              year: 'numeric'
+                            })}</p>
                     </div>
                   </div>
                   <div className="flex items-center">
                     <Users className="h-4 w-4 mr-2 text-muted-foreground" />
                     <div>
                       <p className="text-sm text-muted-foreground">Số khách</p>
-                      <p className="font-medium">{bookingDetails.guestCount}</p>
+                      <p className="font-medium">{bookingDetails.numberOfGuests}</p>
                     </div>
                   </div>
                 </div>
@@ -93,7 +101,7 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
             </div>
 
             {/* Guest Information */}
-            {bookingDetails.guestInfo && (
+            {bookingDetails.guestName && (
               <div>
                 <div className="flex items-center mb-3">
                   <User className="h-5 w-5 text-brand-blue mr-2" />
@@ -103,17 +111,17 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
                   <div className="flex items-center">
                     <User className="h-4 w-4 mr-2 text-muted-foreground" />
                     <span className="font-medium mr-2">Tên:</span>
-                    <span>{bookingDetails.guestInfo.username}</span>
+                    <span>{bookingDetails.guestName}</span>
                   </div>
                   <div className="flex items-center">
                     <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
                     <span className="font-medium mr-2">Địa chỉ:</span>
-                    <span>{bookingDetails.guestInfo.address}</span>
+                    <span>{bookingDetails.guestAddress}</span>
                   </div>
                   <div className="flex items-center">
                     <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
                     <span className="font-medium mr-2">Số điện thoại:</span>
-                    <span>{bookingDetails.guestInfo.phoneNumber}</span>
+                    <span>{bookingDetails.guestPhone}</span>
                   </div>
                 </div>
               </div>

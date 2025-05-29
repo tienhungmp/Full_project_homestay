@@ -8,7 +8,6 @@ export const useGetRevenueHost = () => {
     const getRevenueHost = async (querys : {periodType: string, count: number, hostId: string}) => {
       const response = await fetchData<any>(`/bookings/host-revenue?periodType=${querys.periodType}&count=${querys.count}&hostId=${querys.hostId}`);
       if (response.success && response.data) {
-        console.log(response)
         setRevenue(response.data.data);
       }
       return response;

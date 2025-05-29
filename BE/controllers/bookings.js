@@ -90,8 +90,6 @@ exports.createBooking = asyncHandler(async (req, res, next) => {
         paymentStatus
     } = req.body;
 
-    // console.log(req.user._id.toString())
-
     // 1. Kiểm tra homestay tồn tại
     const homestay = await Homestay.findById(propertyId);
     if (!homestay) {
@@ -150,6 +148,43 @@ exports.createPayment = asyncHandler(async (req, res, next) => {
 
     const tomorrow = new Date();
     tomorrow.setMinutes(tomorrow.getMinutes() + 15);
+
+    const booking = await Booking.findById(orderId).populate('homestay', '_id numberOfRooms');
+
+    if (!booking) {
+        return next(new ErrorResponse('Booking not found', 404));
+    }
+
+    const { homestay , checkInDate, checkOutDate } = booking;
+
+    if (new Date() > checkInDate) {
+        // Update booking status and payment status when payment deadline passed
+        booking.bookingStatus = 'cancelled';
+        booking.paymentStatus = 'failed';
+        await booking.save();
+        
+        return next(new ErrorResponse('Payment deadline has passed. Please make a new booking.', 400));
+    }
+
+    const existingBookings = await Booking.find({
+        homestay: homestay._id.toString(),
+        paymentStatus: 'paid',
+        $or: [
+            {
+                checkInDate: { $lt: checkOutDate },
+                checkOutDate: { $gt: checkInDate }
+            }
+        ]
+    });
+
+    if (existingBookings.length >= homestay.numberOfRooms) {
+        // Update booking status and payment status when no rooms available
+        booking.bookingStatus = 'cancelled'; 
+        booking.paymentStatus = 'failed';
+        await booking.save();
+
+        return next(new ErrorResponse('Homestay này đã hết phòng trong khoảng thời gian bạn chọn.', 400));
+    }
     
     const paymentUrl = vnpay.buildPaymentUrl({
         vnp_Amount: totalPrice,
@@ -673,8 +708,6 @@ exports.checkAvailability = asyncHandler(async (req, res, next) => {
         checkInDate: { $lte: checkDate },
         checkOutDate: { $gt: checkDate }
     });
-
-    console.log(bookedRooms)
 
     const totalRooms = homestay.numberOfRooms;
     const availableRooms = totalRooms - bookedRooms.length;

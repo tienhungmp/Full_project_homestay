@@ -92,7 +92,6 @@ const SearchResults: React.FC<SearchResultsProps> = ({
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="bg-white rounded-lg shadow p-8 text-center">

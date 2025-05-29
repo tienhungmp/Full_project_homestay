@@ -111,8 +111,6 @@ const HostDashboard = () => {
     setEditingProperty(null);
   };
 
-  console.log(homestayReviews)
-
   const handleDeleteProperty = async (id: string) => {
     const responseDelete =  await deleteHomestay(id);
     if(responseDelete.success) {

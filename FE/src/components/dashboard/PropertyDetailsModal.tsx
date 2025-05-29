@@ -82,7 +82,6 @@ const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
       const responseInfoRoom = await getCheckAvailabilityHomestay({homestayId: property._id,date:selectedDate})
       if(responseInfoRoom.success) {
         setInfoRoom(responseInfoRoom.data.data)
-        console.log(responseInfoRoom.data.data.bookedRooms)
       }
     };
     fetchData()

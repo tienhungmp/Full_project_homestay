@@ -90,13 +90,5 @@ const HomestaySchema = new mongoose.Schema({
   },
 });
 
-// Middleware để xóa các booking và review liên quan khi homestay bị xóa (tùy chọn)
-// HomestaySchema.pre('remove', async function(next) {
-//   console.log(`Bookings being removed from homestay ${this._id}`);
-//   await this.model('Booking').deleteMany({ homestay: this._id });
-//   console.log(`Reviews being removed from homestay ${this._id}`);
-//   await this.model('Review').deleteMany({ homestay: this._id });
-//   next();
-// });
 
 module.exports = mongoose.model('Homestay', HomestaySchema);

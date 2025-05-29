@@ -26,6 +26,8 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useGetBookingsByRole } from "@/hooks/useOrder";
+import InvoiceDetailModal from "@/components/InvoiceDetailModal";
+
 
 // Mock booking data
 const mockBookings = [
@@ -131,7 +133,9 @@ const Profile = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const {getBookingsByRole} = useGetBookingsByRole();
-  const [bookings, setBookings] = useState<any[]>([]); // State to hold booking
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -143,11 +147,15 @@ const Profile = () => {
   const maxTableHeight = needsScrolling ? "400px" : "auto";
   const maxCardsHeight = needsScrolling ? "500px" : "auto";
 
+  const handleViewInvoiceDetail = (booking: any) => {  
+    setSelectedInvoice(booking);
+    setIsInvoiceModalOpen(true);
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       const responseBooking = await getBookingsByRole();
       setBookings(responseBooking.data.data)
-      console.log(responseBooking.data.data)  
     }
     fetchData();
   },[])
@@ -273,19 +281,7 @@ const Profile = () => {
                                       variant="ghost" 
                                       size="sm" 
                                       className="h-8 w-8 p-0"
-                                      onClick={() => navigate('/payment-success', { 
-                                        state: { 
-                                          paymentDetails: {
-                                            propertyName: booking.propertyName,
-                                            checkIn: booking.checkIn,
-                                            checkOut: booking.checkOut,
-                                            totalPrice: booking.totalPrice,
-                                            guestCount: 2,
-                                            paymentMethod: "Thẻ tín dụng"
-                                          },
-                                          bookingId: booking.id
-                                        } 
-                                      })}
+                                      onClick={() => handleViewInvoiceDetail(booking)}
                                     >
                                       <ExternalLink className="h-4 w-4" />
                                     </Button>
@@ -327,19 +323,7 @@ const Profile = () => {
                                         variant="outline" 
                                         size="sm" 
                                         className="h-7 text-xs"
-                                        onClick={() => navigate('/payment-success', { 
-                                          state: { 
-                                            paymentDetails: {
-                                              propertyName: booking.propertyName,
-                                              checkIn: booking.checkIn,
-                                              checkOut: booking.checkOut,
-                                              totalPrice: booking.totalPrice,
-                                              guestCount: 2,
-                                              paymentMethod: "Thẻ tín dụng"
-                                            },
-                                            bookingId: booking.id
-                                          } 
-                                        })}
+                                        onClick={() => handleViewInvoiceDetail(booking)}
                                       >
                                         Chi tiết
                                       </Button>
@@ -391,6 +375,14 @@ const Profile = () => {
             </div>
           </div>
         </div>
+
+         {/* Invoice Detail Modal */}
+         <InvoiceDetailModal
+          isOpen={isInvoiceModalOpen}
+          onClose={() => setIsInvoiceModalOpen(false)}
+          invoiceData={selectedInvoice}
+        />
+        
         <Footer />
       </div>
     </ProtectedRoute>

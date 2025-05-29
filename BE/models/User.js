@@ -31,6 +31,25 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  status: {
+    type: String,
+    enum: ['active', 'inactive'],
+    default: 'active'
+  },
+  address: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  phone: {
+    type: String,
+    trim: true,
+    match: [
+      /^[0-9]{10,11}$/,
+      'Please enter a valid phone number'
+    ],
+    default: '',
+  },
 });
 
 // Mã hóa mật khẩu trước khi lưu

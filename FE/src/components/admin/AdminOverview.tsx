@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { 
   Card, 
   CardContent, 
@@ -17,6 +17,7 @@ import {
   ResponsiveContainer 
 } from "recharts";
 import { Users, Home, PackageCheck, Star } from "lucide-react";
+import { useGetTotalAnalysis } from "@/hooks/userAdminAnalys";
 
 // Sample data - in a real app, this would come from an API
 const bookingData = [
@@ -41,8 +42,23 @@ const featuredProperties = [
 ];
 
 export function AdminOverview() {
+  const { getTotalAnalysis } = useGetTotalAnalysis();
+  const [totalAnalysis, setTotalAnalysis] = React.useState<any>();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const responseData = await getTotalAnalysis();
+      console.log(responseData.data.data);
+      setTotalAnalysis(responseData.data.data);
+    };
+    fetchData();
+  }, []);
+  
   return (
-    <div className="space-y-6">
+    <>
+    {
+      totalAnalysis &&
+      <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Tổng quan hệ thống</h2>
         <p className="text-muted-foreground">
@@ -58,7 +74,7 @@ export function AdminOverview() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">2,854</div>
+            <div className="text-2xl font-bold">{totalAnalysis.users}</div>
             <p className="text-xs text-muted-foreground">
               +18% so với tháng trước
             </p>
@@ -71,7 +87,7 @@ export function AdminOverview() {
             <Home className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">485</div>
+            <div className="text-2xl font-bold">{totalAnalysis.homestays}</div>
             <p className="text-xs text-muted-foreground">
               +12% so với tháng trước
             </p>
@@ -84,7 +100,7 @@ export function AdminOverview() {
             <PackageCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">6,782</div>
+            <div className="text-2xl font-bold">{totalAnalysis.bookings}</div>
             <p className="text-xs text-muted-foreground">
               +24% so với tháng trước
             </p>
@@ -97,7 +113,7 @@ export function AdminOverview() {
             <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4,328</div>
+            <div className="text-2xl font-bold">{totalAnalysis.reviews}</div>
             <p className="text-xs text-muted-foreground">
               +8% so với tháng trước
             </p>
@@ -117,7 +133,7 @@ export function AdminOverview() {
           <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={bookingData}
+                data={totalAnalysis.monthlyBookings}
                 margin={{
                   top: 5,
                   right: 30,
@@ -146,16 +162,16 @@ export function AdminOverview() {
         </CardHeader>
         <CardContent>
           <div className="space-y-8">
-            {featuredProperties.map((property) => (
-              <div key={property.id} className="flex items-center">
+            {totalAnalysis.topHomestays.map((property) => (
+              <div key={property.homestayDetails._id} className="flex items-center">
                 <div className="w-9 h-9 rounded bg-gray-200 mr-4"></div>
                 <div className="space-y-1 flex-1">
-                  <p className="text-sm font-medium leading-none">{property.name}</p>
-                  <p className="text-sm text-muted-foreground">{property.location}</p>
+                  <p className="text-sm font-medium leading-none">{property.homestayDetails.name}</p>
+                  <p className="text-sm text-muted-foreground">{property.homestayDetails.address}</p>
                 </div>
                 <div className="text-sm text-right">
-                  <p className="font-medium">{property.bookings} lượt đặt</p>
-                  <p className="text-muted-foreground">{property.rating} sao</p>
+                  <p className="font-medium">{property.bookingCount} lượt đặt</p>
+                  <p className="text-muted-foreground">{property.homestayDetails.averageRating} sao</p>
                 </div>
               </div>
             ))}
@@ -163,5 +179,7 @@ export function AdminOverview() {
         </CardContent>
       </Card>
     </div>
+    }
+    </>
   );
 }

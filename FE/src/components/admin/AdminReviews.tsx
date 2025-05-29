@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { 
   Table, 
   TableBody, 
@@ -18,18 +18,20 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Flag, Search, Star } from "lucide-react";
 import { toast } from "sonner";
+import { useGetAllReviews } from "@/hooks/userAdminAnalys";
 
 export function AdminReviews() {
   // Sample data - in a real app, this would come from an API
   const [reviews, setReviews] = useState([
-    { id: 1, property: "Villa Green Garden", user: "Nguyễn Văn A", date: "10/08/2023", rating: 5, content: "Tuyệt vời! Dịch vụ chất lượng, view đẹp, nhân viên thân thiện.", status: "visible" },
-    { id: 2, property: "Homestay Mountainview", user: "Trần Thị B", date: "05/08/2023", rating: 4, content: "Không gian thoáng đãng, sạch sẽ. Tuy nhiên, hơi xa trung tâm.", status: "visible" },
-    { id: 3, property: "Khách sạn Panorama", user: "Lê Văn C", date: "28/07/2023", rating: 2, content: "Phòng không sạch sẽ, dịch vụ kém, giá quá cao so với chất lượng.", status: "visible" },
-    { id: 4, property: "Resort Ocean Pearl", user: "Phạm Thị D", date: "20/07/2023", rating: 5, content: "Resort tuyệt đẹp, bãi biển riêng, nhân viên chu đáo.", status: "visible" },
-    { id: 5, property: "Khách sạn Sunlight", user: "Hoàng Văn E", date: "15/07/2023", rating: 1, content: "Dịch vụ tệ, ồn ào, không đúng như quảng cáo. Rất thất vọng.", status: "hidden" },
+    // { id: 1, property: "Villa Green Garden", user: "Nguyễn Văn A", date: "10/08/2023", rating: 5, content: "Tuyệt vời! Dịch vụ chất lượng, view đẹp, nhân viên thân thiện.", status: "visible" },
+    // { id: 2, property: "Homestay Mountainview", user: "Trần Thị B", date: "05/08/2023", rating: 4, content: "Không gian thoáng đãng, sạch sẽ. Tuy nhiên, hơi xa trung tâm.", status: "visible" },
+    // { id: 3, property: "Khách sạn Panorama", user: "Lê Văn C", date: "28/07/2023", rating: 2, content: "Phòng không sạch sẽ, dịch vụ kém, giá quá cao so với chất lượng.", status: "visible" },
+    // { id: 4, property: "Resort Ocean Pearl", user: "Phạm Thị D", date: "20/07/2023", rating: 5, content: "Resort tuyệt đẹp, bãi biển riêng, nhân viên chu đáo.", status: "visible" },
+    // { id: 5, property: "Khách sạn Sunlight", user: "Hoàng Văn E", date: "15/07/2023", rating: 1, content: "Dịch vụ tệ, ồn ào, không đúng như quảng cáo. Rất thất vọng.", status: "hidden" },
   ]);
-
   const [searchQuery, setSearchQuery] = useState("");
+
+  const {getAllReviews} = useGetAllReviews()
 
   // Toggle visibility of a review
   const handleToggleVisibility = (reviewId: number) => {
@@ -54,10 +56,17 @@ export function AdminReviews() {
 
   // Filter reviews based on search query
   const filteredReviews = reviews.filter(review => {
-    return review.property.toLowerCase().includes(searchQuery.toLowerCase()) || 
-           review.user.toLowerCase().includes(searchQuery.toLowerCase()) ||
-           review.content.toLowerCase().includes(searchQuery.toLowerCase());
+    return review.homestay.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+           review.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+           review.text.toLowerCase().includes(searchQuery.toLowerCase());
   });
+
+  useEffect(() => {
+    getAllReviews().then((res) => {
+      setReviews(res.data.data.reviews);
+      console.log(res.data.data.reviews); // In ra danh sách các booking trong console log để kiểm tra và debug
+    });
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -98,26 +107,30 @@ export function AdminReviews() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredReviews.map((review) => (
-                <TableRow key={review.id}>
-                  <TableCell>{review.id}</TableCell>
-                  <TableCell className="font-medium">{review.property}</TableCell>
-                  <TableCell>{review.user}</TableCell>
-                  <TableCell>{review.date}</TableCell>
+              {filteredReviews && filteredReviews.map((review) => (
+                <TableRow key={review._id}>
+                  <TableCell>#{review._id.slice(-4)}</TableCell>
+                  <TableCell className="font-medium">{review.homestay.name}</TableCell>
+                  <TableCell>{review.user.name}</TableCell>
+                  <TableCell>{new Date(review.createdAt).toLocaleDateString('vi-VN', {
+                    day: '2-digit',
+                    month: '2-digit', 
+                    year: 'numeric'
+                  })}</TableCell>
                   <TableCell>
                     <div className="flex items-center">
                       <span className="mr-1">{review.rating}</span>
                       <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
                     </div>
                   </TableCell>
-                  <TableCell className="max-w-xs truncate" title={review.content}>
-                    {review.content}
+                  <TableCell className="max-w-xs truncate" title={review.text}>
+                    {review.text}
                   </TableCell>
                   <TableCell>
                     <span className={`px-2 py-1 rounded-full text-xs ${
-                      review.status === 'visible' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      review.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                     }`}>
-                      {review.status === 'visible' ? 'Hiển thị' : 'Đã ẩn'}
+                      {review.status === 'active' ? 'Hiển thị' : 'Đã ẩn'}
                     </span>
                   </TableCell>
                   <TableCell>
