@@ -29,6 +29,10 @@ exports.protect = asyncHandler(async (req, res, next) => {
 
     req.user = await User.findById(decoded.id);
 
+    if (req.user.status === 'inactive') {
+        return next(new ErrorResponse('Người dùng đã bị khóa', 401));
+    }
+
     if (!req.user) {
         return next(new ErrorResponse('Người dùng không tồn tại', 401));
     }

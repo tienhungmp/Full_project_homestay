@@ -9,7 +9,8 @@ const {
   getTopRatedHomestays,
   getHomestaysByHost,
   checkHomestayAvailability,
-  getAvailableDates
+  getAvailableDates,
+  updateHomestayStatus
 } = require('../controllers/homestays');
 
 const Homestay = require('../models/Homestay'); // Cần cho advancedResults nếu dùng
@@ -39,7 +40,7 @@ router
       path: 'user',
       select: 'name avatar' 
     }
-  }), getHomestays) // Sử dụng advancedResults, populate reviews
+  }), getHomestays)
   .post(protect, authorize('host', 'admin'), createHomestay);
 
 
@@ -51,11 +52,13 @@ router.route('/check-availability').get(checkHomestayAvailability)
 
 router.route('/available-dates').get(getAvailableDates)
 
+router.route('/update-status').put(protect, authorize('admin'), updateHomestayStatus); 
+
 router
-  .route('/:id')
-  .get(getHomestay)
-  .put(protect, authorize('host', 'admin'), updateHomestay)
-  .delete(protect, authorize('host', 'admin'), deleteHomestay);
+.route('/:id')
+.get(getHomestay)
+.put(protect, authorize('host', 'admin'), updateHomestay)
+.delete(protect, authorize('host', 'admin'), deleteHomestay);
 
 
 module.exports = router;

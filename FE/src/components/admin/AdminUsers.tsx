@@ -1,26 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Search, 
-  UserPlus, 
-  Filter, 
-  UserCheck
-} from "lucide-react";
+import { Search, UserPlus, Filter, UserCheck } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -38,6 +28,7 @@ import {
 } from "@/components/ui/pagination";
 import { toast } from "sonner";
 import { useGetAllUser } from "@/hooks/userAdminAnalys";
+import { useUpdateStatusUser } from "@/hooks/useUser";
 
 export function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -45,35 +36,61 @@ export function AdminUsers() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-  const {getAllUser} = useGetAllUser();
+  const { getAllUser } = useGetAllUser();
+  const { updateStatusUser } = useUpdateStatusUser();
 
   const handleChangeRole = (userId: number, newRole: string) => {
-    setUsers(users.map(user => 
-      user.id === userId ? { ...user, role: newRole } : user
-    ));
-    
-    toast.success(`Đã chuyển vai trò người dùng thành ${newRole === 'host' ? 'Chủ nhà' : newRole === 'admin' ? 'Quản trị viên' : 'Người dùng'}`);
+    setUsers(
+      users.map((user) =>
+        user._id === userId ? { ...user, role: newRole } : user
+      )
+    );
+
+    toast.success(
+      `Đã chuyển vai trò người dùng thành ${
+        newRole === "host"
+          ? "Chủ nhà"
+          : newRole === "admin"
+          ? "Quản trị viên"
+          : "Người dùng"
+      }`
+    );
   };
 
-  const handleToggleStatus = (userId: number) => {
-    setUsers(users.map(user => {
-      if (user.id === userId) {
-        const newStatus = user.status === 'active' ? 'inactive' : 'active';
-        return { ...user, status: newStatus };
+  const handleToggleStatus = async (userId: string) => {
+    const user = users.find((u) => u._id === userId);
+    if (!user) return;
+
+    const newStatus = user.status === "active" ? "inactive" : "active";
+
+    try {
+      const response = await updateStatusUser({
+        idUser: userId,
+        status: newStatus,
+      });
+
+      if (response.success) {
+        setUsers(
+          users.map((u) => (u._id === userId ? { ...u, status: newStatus } : u))
+        );
+
+        const actionText = newStatus === "active" ? "kích hoạt" : "khóa";
+        toast.success(`Đã ${actionText} tài khoản người dùng`);
       }
-      return user;
-    }));
-    
-    const user = users.find(u => u.id === userId);
-    const newStatus = user?.status === 'active' ? 'inactive' : 'active';
-    
-    toast.success(`Đã ${newStatus === 'active' ? 'kích hoạt' : 'khóa'} tài khoản người dùng`);
+    } catch (error) {
+      toast.error("Đã xảy ra lỗi khi cập nhật trạng thái người dùng");
+    }
   };
 
-  const filteredUsers = users.filter(user => {
-    const matchesRole = selectedRole ? selectedRole == "all" ? true : user.role === selectedRole : true;
-    const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          user.email.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredUsers = users.filter((user) => {
+    const matchesRole = selectedRole
+      ? selectedRole == "all"
+        ? true
+        : user.role === selectedRole
+      : true;
+    const matchesSearch =
+      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesRole && matchesSearch;
   });
 
@@ -86,10 +103,10 @@ export function AdminUsers() {
   useEffect(() => {
     const fetchData = async () => {
       const res = await getAllUser();
-      if(res.success){
+      if (res.success) {
         setUsers(res.data.data.users);
       }
-    }
+    };
     fetchData();
   }, []);
 
@@ -97,7 +114,9 @@ export function AdminUsers() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Quản lý người dùng</h2>
+          <h2 className="text-3xl font-bold tracking-tight">
+            Quản lý người dùng
+          </h2>
           <p className="text-muted-foreground">
             Quản lý tài khoản người dùng trong hệ thống
           </p>
@@ -114,9 +133,9 @@ export function AdminUsers() {
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Tìm kiếm..." 
-                  className="pl-8" 
+                <Input
+                  placeholder="Tìm kiếm..."
+                  className="pl-8"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -153,44 +172,69 @@ export function AdminUsers() {
             </TableHeader>
             <TableBody>
               {currentItems.map((user) => (
-                <TableRow key={user.id}>
+                <TableRow key={user._id}>
                   <TableCell>#{user._id.slice(-4)}</TableCell>
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 
-                      user.role === 'host' ? 'bg-green-100 text-green-800' :
-                      'bg-blue-100 text-blue-800'
-                    }`}>
-                      {user.role === 'admin' ? 'Quản trị viên' : 
-                       user.role === 'host' ? 'Chủ nhà' : 'Người dùng'}
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs ${
+                        user.role === "admin"
+                          ? "bg-purple-100 text-purple-800"
+                          : user.role === "host"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-blue-100 text-blue-800"
+                      }`}
+                    >
+                      {user.role === "admin"
+                        ? "Quản trị viên"
+                        : user.role === "host"
+                        ? "Chủ nhà"
+                        : "Người dùng"}
                     </span>
                   </TableCell>
                   <TableCell>{user.joinDate}</TableCell>
                   <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {user.status === 'active' ? 'Hoạt động' : 'Bị khóa'}
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs ${
+                        user.status === "active"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {user.status === "active" ? "Hoạt động" : "Bị khóa"}
                     </span>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col sm:flex-row gap-2">
                       <div className="flex gap-2">
-                        {user.status === 'active' ? (
-                          <Button variant="outline" size="sm" className="text-red-500" onClick={() => handleToggleStatus(user.id)}>
+                        {user.status === "active" ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-500"
+                            onClick={() => handleToggleStatus(user._id)}
+                          >
                             Khóa
                           </Button>
                         ) : (
-                          <Button variant="outline" size="sm" className="text-green-500" onClick={() => handleToggleStatus(user.id)}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-green-500"
+                            onClick={() => handleToggleStatus(user._id)}
+                          >
                             Kích hoạt
                           </Button>
                         )}
                       </div>
 
-                      {user.role !== 'host' && user.role !== 'admin' && (
-                        <Select onValueChange={(value) => handleChangeRole(user.id, value)}>
+                      {user.role !== "host" && user.role !== "admin" && (
+                        <Select
+                          onValueChange={(value) =>
+                            handleChangeRole(user._id, value)
+                          }
+                        >
                           <SelectTrigger className="h-8 w-36">
                             <div className="flex items-center">
                               <UserCheck className="mr-2 h-3.5 w-3.5" />
@@ -199,8 +243,10 @@ export function AdminUsers() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="host">Thành chủ nhà</SelectItem>
-                            {user.role !== 'admin' && (
-                              <SelectItem value="admin">Thành quản trị</SelectItem>
+                            {user.role !== "admin" && (
+                              <SelectItem value="admin">
+                                Thành quản trị
+                              </SelectItem>
                             )}
                           </SelectContent>
                         </Select>
@@ -216,9 +262,13 @@ export function AdminUsers() {
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                  <PaginationPrevious
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
+                    className={
+                      currentPage === 1 ? "pointer-events-none opacity-50" : ""
+                    }
                   />
                 </PaginationItem>
                 {[...Array(totalPages)].map((_, index) => (
@@ -232,9 +282,15 @@ export function AdminUsers() {
                   </PaginationItem>
                 ))}
                 <PaginationItem>
-                  <PaginationNext 
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                  <PaginationNext
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                    className={
+                      currentPage === totalPages
+                        ? "pointer-events-none opacity-50"
+                        : ""
+                    }
                   />
                 </PaginationItem>
               </PaginationContent>

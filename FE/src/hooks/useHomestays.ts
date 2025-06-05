@@ -192,3 +192,21 @@ export const useCheckAvailableDates = () => {
     error,
   };
 };
+
+export const useUpdateStatusHomestay = () => {
+  const { updateData, isLoading, error } = useApi();
+
+  const updatesStatusHomeStay = async (infoUpdate: {status: string, idHomestay: string}) => {
+    const response = await updateData<any>(
+      `homestays/update-status`,
+       infoUpdate,
+    );
+    return response;
+  };
+
+  return {
+    updatesStatusHomeStay,
+    isLoading,
+    error,
+  };
+};

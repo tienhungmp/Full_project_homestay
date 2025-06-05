@@ -66,6 +66,16 @@ const BookingSchema = new mongoose.Schema({
       return !this.user;
     },
   },
+  confirmationToken: {
+    type: String,
+    required: false,
+    default: undefined
+  },
+  confirmationTokenExpire: {
+    type: Date,
+    required: false,
+    default: undefined
+  },
   createdAt: {
     type: Date,
     default: Date.now,

@@ -19,7 +19,7 @@ const About = () => {
               </p>
               <div className="inline-flex items-center justify-center gap-2 bg-brand-blue text-white px-6 py-3 rounded-full">
                 <Info className="w-5 h-5" />
-                <span>Thành lập năm 2020</span>
+                <span>Thành lập năm 2025</span>
               </div>
             </div>
           </div>

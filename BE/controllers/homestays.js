@@ -50,7 +50,7 @@ exports.getHomestays = asyncHandler(async (req, res, next) => {
     const total = await Homestay.countDocuments();
 
     // Get paginated homestays with host information
-    const homestays = await Homestay.find(filter)
+    const homestays = await Homestay.find({ ...filter, status: 'hoạt động' })
         .populate('host', 'name email').populate('category')
         .skip(startIndex)
         .limit(limit);
@@ -293,14 +293,12 @@ exports.deleteHomestay = asyncHandler(async (req, res, next) => {
         );
     }
 
-    // Optional: Xóa các booking/review liên quan trước khi xóa homestay (nếu cần)
-    // await homestay.remove(); // Sử dụng nếu có pre 'remove' hook trong model
-    await Homestay.deleteOne({ _id: req.params.id }); // Xóa trực tiếp
-
+    // Delete the homestay permanently
+    await Homestay.findByIdAndDelete(req.params.id);
 
     res.status(200).json({
         success: true,
-        data: {}
+        message: 'Homestay has been deactivated successfully'
     });
 });
 
@@ -367,7 +365,8 @@ exports.getTopRatedHomestays = asyncHandler(async (req, res, next) => {
     
     const topHomestays = await Homestay.find({
         // Only include homestays that have at least one review/rating
-        averageRating: { $exists: true, $ne: null }
+        averageRating: { $exists: true, $ne: null },
+        status: 'hoạt động'
     })
     .sort({ averageRating: -1 }) // Sort by rating in descending order
     .limit(limit)
@@ -578,5 +577,50 @@ exports.getAvailableDates = asyncHandler(async (req, res, next) => {
             month: monthYear,
             availableDates
         }
+    });
+});
+
+// @desc    Update homestay status
+// @route   PUT /api/homestays/update-status
+// @access  Private (Admin only)
+exports.updateHomestayStatus = asyncHandler(async (req, res, next) => {
+    const { status, idHomestay } = req.body;
+
+    if (!status) {
+        return next(new ErrorResponse('Please provide a status', 400));
+    }
+
+    // Validate status value
+    const validStatuses = ['hoạt động', 'bảo trì', 'ngừng hoạt động'];
+    if (!validStatuses.includes(status)) {
+        return next(new ErrorResponse('Invalid status value', 400));
+    }
+
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+        return next(new ErrorResponse('Only admin can update homestay status', 403));
+    }
+
+    let homestay = await Homestay.findById(idHomestay);
+
+    if (!homestay) {
+        return next(
+            new ErrorResponse(`Homestay not found with id ${idHomestay}`, 404)
+        );
+    }
+
+    // Update homestay status
+    homestay = await Homestay.findByIdAndUpdate(
+        idHomestay, // Use idHomestay from req.body instead of req.params.id
+        { status },
+        {
+            new: true,
+            runValidators: true
+        }
+    );
+
+    res.status(200).json({
+        success: true,
+        data: homestay
     });
 });

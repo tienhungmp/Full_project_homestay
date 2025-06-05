@@ -10,7 +10,7 @@ const router = express.Router();
 
 const { protect } = require('../middlewares/auth');
 
-router.use(protect); // All favorites routes require authentication
+router.use(protect);
 
 router.route('/')
   .get(getFavorites);

@@ -40,7 +40,8 @@ const ImageGalleryModal = ({ isOpen, onClose, images, propertyName }: ImageGalle
             <img
               src={linkBackend + images[currentImageIndex]}
               alt={`${propertyName} - Ảnh ${currentImageIndex + 1}`}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-cover max-h-[calc(80vh-200px)] mx-auto"
+              style={{ display: 'block' }}
             />
             
             {/* Navigation Buttons */}

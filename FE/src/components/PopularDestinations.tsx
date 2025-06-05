@@ -32,7 +32,7 @@ const destinations = [
     id: 4,
     name: "Sapa",
     properties: 420,
-    image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1577717903315-1691ae25ab3f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     trending: true,
     description: "Thiên đường ruộng bậc thang"
   },
@@ -48,7 +48,7 @@ const destinations = [
     id: 6,
     name: "Nha Trang",
     properties: 920,
-    image: "https://images.unsplash.com/photo-1563455947-c8798d3a7bb0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1562602833-0f4ab2fc46e3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     trending: true,
     description: "Vịnh biển đẹp nhất Việt Nam"
   }

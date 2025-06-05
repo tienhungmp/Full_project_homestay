@@ -76,6 +76,10 @@ exports.login = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Thông tin đăng nhập không hợp lệ', 401));
   }
 
+  if (user.status === 'inactive') {
+    return next(new ErrorResponse('Người dùng đã bị khóa', 401));
+  }
+
   sendTokenResponse(user, 200, res);
 });
 
@@ -84,7 +88,7 @@ exports.login = asyncHandler(async (req, res, next) => {
 // @access  Private
 exports.getMe = asyncHandler(async (req, res, next) => {
   // req.user được gán từ middleware protect
-  const user = await User.findById(req.user.id);
+  const user = await User.findById(req.user._id);
 
   if (!user) {
       return next(new ErrorResponse('Người dùng không tìm thấy', 404));

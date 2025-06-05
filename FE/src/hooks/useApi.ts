@@ -51,7 +51,7 @@ export function useApi() {
     return apiCall<T>(() => post<T>(url, data, config));
   };
 
-  const updateData = <T>(url: string, data: any, config?: AxiosRequestConfig) => {
+  const updateData = <T>(url: string, data?: any, config?: AxiosRequestConfig) => {
     return apiCall<T>(() => put<T>(url, data, config));
   };
 

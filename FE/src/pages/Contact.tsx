@@ -145,7 +145,7 @@ const Contact = () => {
                       <MapPin className="h-5 w-5 mr-3 text-brand-blue mt-0.5" />
                       <div>
                         <h3 className="font-medium">Địa chỉ</h3>
-                        <p className="text-muted-foreground">123 Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh</p>
+                        <p className="text-muted-foreground">Bách Khoa Đà Nẵng</p>
                       </div>
                     </div>
                     
@@ -204,7 +204,7 @@ const Contact = () => {
           <h2 className="text-xl font-bold mb-4">Vị trí của chúng tôi</h2>
           <div className="w-full h-96 border rounded-lg overflow-hidden">
             <iframe 
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.3946996775513!2d106.70129147504418!3d10.779693989318768!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f4670702e31%3A0xa5777fb3a5d0f8d4!2sTimes%20Square%20Building!5e0!3m2!1sen!2s!4v1690017024455!5m2!1sen!2s" 
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3834.1076177000814!2d108.14854287499878!3d16.073801084632823!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x314218243c667fe3%3A0xcaaf5b0a4c809ddb!2zVHLGsOG7nW5nIMSQ4bqhaSBo4buNYyBCw6FjaCBraG9hIC0gxJDhuqFpIGjhu41jIMSQw6AgTuG6tW5n!5e0!3m2!1svi!2s!4v1710255031444!5m2!1svi!2s"
               width="100%" 
               height="100%" 
               style={{ border: 0 }} 

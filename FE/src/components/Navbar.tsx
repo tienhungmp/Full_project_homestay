@@ -91,6 +91,11 @@ const Navbar = () => {
                     <Link to="/host">Quản lý chỗ nghỉ</Link>
                   </DropdownMenuItem>
                 )}
+                {(user?.role === 'user') && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/favorites">Homestay yêu thích</Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-red-500 hover:text-red-600 cursor-pointer">
                   <LogOut size={16} className="mr-2" />
@@ -112,7 +117,7 @@ const Navbar = () => {
         
         {isMenuOpen && (
           <div className="fixed inset-0 top-16 bg-white z-50 flex flex-col md:hidden animate-fade-in">
-            <nav className="flex flex-col gap-4 p-6">
+            <nav className="flex flex-col gap-4 p-6 bg-white">
               <Link 
                 to="/" 
                 className="text-lg font-medium py-2 hover:text-brand-blue transition-colors"
@@ -142,17 +147,17 @@ const Navbar = () => {
                 Liên hệ
               </Link>
               
-              {/* {isAuthenticated && user?.role === 'admin' && (
+              {isAuthenticated && user?.role === 'admin' && (
                 <Link 
                   to="/admin" 
-                  className="text-lg font-medium py-2 text-yellow-600 hover:text-yellow-700 transition-colors"
+                  className="text-lg font-medium py-2 transition-colors"
                   onClick={toggleMenu}
                 >
-                  Quản trị
+                  Quản trị viên
                 </Link>
-              )} */}
+              )}
               
-              {isAuthenticated && (user?.role === 'host' || user?.role === 'admin') && (
+              {isAuthenticated && (user?.role === 'host') && (
                 <Link 
                   to="/host" 
                   className="text-lg font-medium py-2 text-green-600 hover:text-green-700 transition-colors"

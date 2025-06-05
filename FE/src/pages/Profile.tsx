@@ -27,83 +27,9 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useGetBookingsByRole } from "@/hooks/useOrder";
 import InvoiceDetailModal from "@/components/InvoiceDetailModal";
-
-
-// Mock booking data
-const mockBookings = [
-  {
-    id: "BOOK-12345",
-    propertyName: "Villa Hạ Long Bay View",
-    checkIn: "15/06/2023",
-    checkOut: "20/06/2023",
-    totalPrice: 8500000,
-    status: "completed",
-    imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1000&auto=format&fit=crop"
-  },
-  {
-    id: "BOOK-67890",
-    propertyName: "Coco Beach Resort Phú Quốc",
-    checkIn: "10/08/2023",
-    checkOut: "15/08/2023",
-    totalPrice: 6300000,
-    status: "completed",
-    imageUrl: "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?q=80&w=1000&auto=format&fit=crop"
-  },
-  {
-    id: "BOOK-24680",
-    propertyName: "Mường Thanh Grand Đà Nẵng",
-    checkIn: "24/12/2023",
-    checkOut: "28/12/2023",
-    totalPrice: 4800000,
-    status: "cancelled",
-    imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1000&auto=format&fit=crop"
-  },
-  {
-    id: "BOOK-13579",
-    propertyName: "Sapa Eco Retreat",
-    checkIn: "03/03/2024",
-    checkOut: "07/03/2024",
-    totalPrice: 5200000,
-    status: "completed",
-    imageUrl: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=1000&auto=format&fit=crop"
-  },
-  {
-    id: "BOOK-97531",
-    propertyName: "Duplex Apartment Thảo Điền",
-    checkIn: "15/05/2024",
-    checkOut: "25/05/2024",
-    totalPrice: 12800000,
-    status: "upcoming",
-    imageUrl: "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?q=80&w=1000&auto=format&fit=crop"
-  },
-  {
-    id: "BOOK-65432",
-    propertyName: "Homestay Tam Cốc Ninh Bình",
-    checkIn: "05/07/2024",
-    checkOut: "10/07/2024",
-    totalPrice: 3200000,
-    status: "upcoming",
-    imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1000&auto=format&fit=crop"
-  },
-  {
-    id: "BOOK-78901",
-    propertyName: "Khách sạn Continental Sài Gòn",
-    checkIn: "20/08/2024",
-    checkOut: "25/08/2024",
-    totalPrice: 7500000,
-    status: "upcoming",
-    imageUrl: "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?q=80&w=1000&auto=format&fit=crop"
-  },
-  {
-    id: "BOOK-23456",
-    propertyName: "Flamingo Đại Lải Resort",
-    checkIn: "10/09/2024",
-    checkOut: "15/09/2024",
-    totalPrice: 9800000,
-    status: "upcoming",
-    imageUrl: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=1000&auto=format&fit=crop"
-  }
-];
+import EditProfileModal from "@/components/profile/EditProfileModal";
+import ChangePasswordModal from "@/components/profile/ChangePasswordModal";
+import { useGetUserIsLogin } from "@/hooks/useUser";
 
 // Helper function to get status badge color
 const getStatusColor = (status: string) => {
@@ -132,10 +58,14 @@ const statusMapping = {
 const Profile = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [userIsLogin, setUserIsLogin] = useState<any>();
   const {getBookingsByRole} = useGetBookingsByRole();
+  const {getUserIsLogin}  = useGetUserIsLogin();
   const [bookings, setBookings] = useState<any[]>([]);
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -143,7 +73,7 @@ const Profile = () => {
   };
 
   // Determine if we need scrolling (more than 7 items)
-  const needsScrolling = mockBookings.length > 7;
+  const needsScrolling = bookings.length > 7;
   const maxTableHeight = needsScrolling ? "400px" : "auto";
   const maxCardsHeight = needsScrolling ? "500px" : "auto";
 
@@ -152,13 +82,26 @@ const Profile = () => {
     setIsInvoiceModalOpen(true);
   };
 
+  const handleEditProfile = () => {
+    setIsEditProfileModalOpen(true);
+  };
+
+  const handleChangePassword = () => {
+    setIsChangePasswordModalOpen(true);
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       const responseBooking = await getBookingsByRole();
-      setBookings(responseBooking.data.data)
+      const responseUser = await getUserIsLogin();
+      if(responseBooking.success && responseUser.success){
+        setBookings(responseBooking.data.data)
+        setUserIsLogin(responseUser.data.data)
+      }
     }
     fetchData();
-  },[])
+  },[isEditProfileModalOpen])
+
   return (
     <ProtectedRoute>
       <div className="min-h-screen flex flex-col">
@@ -198,7 +141,7 @@ const Profile = () => {
                       <Phone className="h-5 w-5 text-gray-500" />
                       <div>
                         <p className="text-sm text-gray-500">Số điện thoại</p>
-                        <p className="font-medium">Chưa cập nhật</p>
+                        <p className="font-medium">{userIsLogin?.phone ? userIsLogin.phone :  'Chưa cập nhật'}</p>
                       </div>
                     </div>
 
@@ -206,7 +149,7 @@ const Profile = () => {
                       <MapPin className="h-5 w-5 text-gray-500" />
                       <div>
                         <p className="text-sm text-gray-500">Địa chỉ</p>
-                        <p className="font-medium">Chưa cập nhật</p>
+                        <p className="font-medium">{userIsLogin?.address ? userIsLogin.address :  'Chưa cập nhật'}</p>
                       </div>
                     </div>
 
@@ -222,13 +165,19 @@ const Profile = () => {
                       <Calendar className="h-5 w-5 text-gray-500" />
                       <div>
                         <p className="text-sm text-gray-500">Ngày tham gia</p>
-                        <p className="font-medium">{new Date().toLocaleDateString('vi-VN')}</p>
+                        <p className="font-medium">{new Date(userIsLogin?.createdAt).toLocaleDateString('vi-VN')}</p>
                       </div>
                     </div>
                   </div>
                 </CardContent>
                 <CardFooter className="flex justify-between flex-col sm:flex-row gap-2">
-                  <Button variant="outline" className="w-full sm:w-auto">Chỉnh sửa hồ sơ</Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full sm:w-auto"
+                      onClick={handleEditProfile}
+                    >
+                      Chỉnh sửa hồ sơ
+                    </Button>
                   <Button 
                     variant="destructive" 
                     className="w-full sm:w-auto"
@@ -297,26 +246,25 @@ const Profile = () => {
                       <div className="md:hidden">
                         <ScrollArea className={needsScrolling ? "h-[500px]" : ""}>
                           <div className="grid gap-4">
-                            {mockBookings.map((booking) => (
-                              <Card key={booking.id} className="overflow-hidden">
+                            {bookings.map((booking) => (
+                              <Card key={booking.invoiceCode} className="overflow-hidden">
                                 <div className="flex">
                                   <div className="w-1/3">
                                     <img 
-                                      src={booking.imageUrl} 
-                                      alt={booking.propertyName}
+                                      src="https://img.freepik.com/free-vector/happy-tourists-choosing-hotel-booking-room-online-flat-illustration_74855-10811.jpg"
+                                      alt={booking.homestay.name}
                                       className="h-full w-full object-cover"
                                     />
                                   </div>
                                   <div className="w-2/3 p-4">
                                     <div className="flex justify-between items-start mb-2">
-                                      <h3 className="font-semibold text-sm line-clamp-1">{booking.propertyName}</h3>
-                                      <Badge className={getStatusColor(booking.status)}>
-                                        {booking.status === 'completed' ? 'Hoàn thành' : 
-                                         booking.status === 'cancelled' ? 'Đã hủy' : 'Sắp tới'}
+                                      <h3 className="font-semibold text-sm line-clamp-1">{booking.homestay.name}</h3>
+                                      <Badge className={getStatusColor(booking.bookingStatus)}>
+                                          {statusMapping[booking.bookingStatus]}
                                       </Badge>
                                     </div>
-                                    <p className="text-xs text-gray-500 mb-1">Mã: {booking.id}</p>
-                                    <p className="text-xs text-gray-500 mb-2">{booking.checkIn} - {booking.checkOut}</p>
+                                    <p className="text-xs text-gray-500 mb-1">Mã: {booking.invoiceCode}</p>
+                                    <p className="text-xs text-gray-500 mb-2">{new Date(booking.checkInDate).toLocaleDateString('vi-VN')} - {new Date(booking.checkOutDate).toLocaleDateString('vi-VN')}</p>
                                     <div className="flex justify-between items-center">
                                       <span className="font-medium text-sm">{booking.totalPrice.toLocaleString('vi-VN')}đ</span>
                                       <Button 
@@ -362,7 +310,7 @@ const Profile = () => {
                   <div>
                     <h3 className="font-medium mb-2">Mật khẩu</h3>
                     <p className="text-sm text-gray-500">Cập nhật mật khẩu định kỳ để tăng cường bảo mật</p>
-                    <Button variant="outline" className="mt-2">Đổi mật khẩu</Button>
+                    <Button variant="outline" className="mt-2" onClick={handleChangePassword}>Đổi mật khẩu</Button>
                   </div>
                   <Separator />
                   <div>
@@ -382,6 +330,18 @@ const Profile = () => {
           onClose={() => setIsInvoiceModalOpen(false)}
           invoiceData={selectedInvoice}
         />
+
+        {userIsLogin && <EditProfileModal
+          isOpen={isEditProfileModalOpen}
+          onClose={() => setIsEditProfileModalOpen(false)}
+          user={userIsLogin}
+        />}
+
+        <ChangePasswordModal
+          isOpen={isChangePasswordModalOpen}
+          onClose={() => setIsChangePasswordModalOpen(false)}
+        />
+        
         
         <Footer />
       </div>

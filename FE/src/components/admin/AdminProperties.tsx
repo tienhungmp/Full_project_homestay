@@ -26,6 +26,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { useUpdateStatusHomestay } from "@/hooks/useHomestays";
 
 export function AdminProperties() {
   const [homestays, setHomestays] = React.useState<any>()
@@ -33,6 +34,7 @@ export function AdminProperties() {
   const [totalPages, setTotalPages] = React.useState(1)
   const itemsPerPage = 10
   const {getAllHomestay} = useGetAllHomestay()
+  const {updatesStatusHomeStay} = useUpdateStatusHomestay()
 
   useEffect(() => {
     const fetchData = async () => {
@@ -48,6 +50,28 @@ export function AdminProperties() {
     const endIndex = startIndex + itemsPerPage
     return homestays?.slice(startIndex, endIndex) || []
   }
+
+const handleStatusChange = async (propertyId: string, currentStatus: string) => {
+  try {
+    // Call API to update property status
+    const newStatus = currentStatus === 'hoạt động' ? 'ngừng hoạt động' : 'hoạt động'
+    // const response = await updatePropertyStatus(propertyId, newStatus)
+
+    const response = await updatesStatusHomeStay({idHomestay: propertyId,status: newStatus})
+
+    if(response.success) {
+      setHomestays(prevHomestays => 
+        prevHomestays.map(property => 
+          property._id === propertyId 
+            ? {...property, status: newStatus}
+            : property
+        )
+      )
+    }
+  } catch (error) {
+    console.error('Failed to update property status:', error)
+  }
+}
 
   return (
     <div className="space-y-6">
@@ -98,14 +122,17 @@ export function AdminProperties() {
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       property.status === 'hoạt động' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
                     }`}>
-                      {property.status === 'hoạt động' ? 'Hoạt động' : 'Bảo trì'}
+                      {property.status === 'hoạt động' ? 'Hoạt động' : 'Dừng Hoạt động'}
                     </span>
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">Chỉnh sửa</Button>
-                      <Button variant="outline" size="sm" className="text-red-500">Xóa</Button>
-                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleStatusChange(property._id, property.status)}
+                    >
+                      {property.status === 'hoạt động' ? 'Dừng Hoạt động' : 'Mở lại'}
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

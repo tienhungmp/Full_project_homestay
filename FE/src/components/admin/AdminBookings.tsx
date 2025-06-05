@@ -109,7 +109,7 @@ export function AdminBookings() {
               {bookings && bookings.map((booking) => (
                 <TableRow key={booking._id}>
                   <TableCell className="font-medium">{booking.invoiceCode}</TableCell>
-                  <TableCell>{booking.homestay.name}</TableCell>
+                  <TableCell>{booking?.homestay?.name}</TableCell>
                   <TableCell>{booking.user ? booking.user.name : booking.guestName}</TableCell>
                   <TableCell>
                     {new Date(booking.checkInDate).toLocaleString('vi-VN', {

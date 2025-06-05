@@ -6,10 +6,9 @@ const asyncHandler = require('../middlewares/async');
 // @route   GET /api/v1/favorites
 // @access  Private
 exports.getFavorites = asyncHandler(async (req, res, next) => {
-  const favorites = await Favorite.find({ user: req.user.id })
+  const favorites = await Favorite.find({ user: req.user._id })
     .populate({
-      path: 'homestay',
-      select: 'name description images price averageRating'
+      path: 'homestay'
     });
 
   res.status(200).json({
@@ -24,7 +23,7 @@ exports.getFavorites = asyncHandler(async (req, res, next) => {
 // @access  Private
 exports.addToFavorites = asyncHandler(async (req, res, next) => {
   const favorite = await Favorite.create({
-    user: req.user.id,
+    user: req.user._id,
     homestay: req.params.homestayId
   });
 
@@ -39,7 +38,7 @@ exports.addToFavorites = asyncHandler(async (req, res, next) => {
 // @access  Private
 exports.removeFromFavorites = asyncHandler(async (req, res, next) => {
   const favorite = await Favorite.findOne({
-    user: req.user.id,
+    user: req.user._id,
     homestay: req.params.homestayId
   });
 
@@ -60,7 +59,7 @@ exports.removeFromFavorites = asyncHandler(async (req, res, next) => {
 // @access  Private
 exports.checkFavorite = asyncHandler(async (req, res, next) => {
   const favorite = await Favorite.findOne({
-    user: req.user.id,
+    user: req.user._id,
     homestay: req.params.homestayId
   });
 

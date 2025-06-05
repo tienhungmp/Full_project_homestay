@@ -28,8 +28,6 @@ const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
   const roomPrice = invoiceData.totalPrice * 0.95;
   const servicePrice = invoiceData.totalPrice * 0.05;
 
-  console.log(invoiceData);
-
   const formatDate = (dateString: string) => {
     // Check if it's already in DD/MM/YYYY format
     if (dateString.includes('/')) {

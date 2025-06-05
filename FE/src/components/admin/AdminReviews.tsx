@@ -64,7 +64,6 @@ export function AdminReviews() {
   useEffect(() => {
     getAllReviews().then((res) => {
       setReviews(res.data.data.reviews);
-      console.log(res.data.data.reviews); // In ra danh sách các booking trong console log để kiểm tra và debug
     });
   }, []);
 

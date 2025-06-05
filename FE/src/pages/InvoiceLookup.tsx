@@ -4,50 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Search, Receipt, User, MapPin, Phone, Home, Calendar, Users, AlertCircle } from 'lucide-react';
+import { Search, Receipt, User, MapPin, Phone, Home, Calendar, Users, AlertCircle, Plus } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useToast } from "@/hooks/use-toast";
-import { useGetInvoiceByCode } from '@/hooks/useOrder';
+import { useGetInvoiceByCode, useSendEmailToAddBooking } from '@/hooks/useOrder';
 import {QRCodeCanvas} from 'qrcode.react'
-
-// Mock invoice data - in real app this would come from API
-const mockInvoices = {
-  "HD001234": {
-    invoiceId: "HD001234",
-    propertyName: "Vinhomes Riverside Villa",
-    checkIn: "2024-12-25",
-    checkOut: "2024-12-27",
-    guestCount: 4,
-    totalPrice: 2400000,
-    paymentMethod: "Thẻ tín dụng/ghi nợ",
-    status: "Đã thanh toán",
-    guestInfo: {
-      username: "Nguyễn Văn An",
-      address: "123 Đường ABC, Quận 1, TP.HCM",
-      phoneNumber: "0909123456",
-      email: "nguyenvanan@email.com"
-    },
-    createdAt: "2024-12-20T10:30:00Z"
-  },
-  "HD001235": {
-    invoiceId: "HD001235",
-    propertyName: "Sapa Retreat Homestay",
-    checkIn: "2024-12-30",
-    checkOut: "2025-01-02",
-    guestCount: 2,
-    totalPrice: 2550000,
-    paymentMethod: "Ví điện tử",
-    status: "Đã thanh toán",
-    guestInfo: {
-      username: "Trần Thị Bình",
-      address: "456 Đường XYZ, Quận 2, TP.HCM",
-      phoneNumber: "0908765432",
-      email: "tranthibinh@email.com"
-    },
-    createdAt: "2024-12-22T14:15:00Z"
-  }
-};
 
 const InvoiceLookup = () => {
   const [invoiceCode, setInvoiceCode] = useState('');
@@ -55,6 +17,7 @@ const InvoiceLookup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const {getInvoiceByCode} = useGetInvoiceByCode();
+  const {sendEmailToAddBooking} = useSendEmailToAddBooking();
   const { toast } = useToast();
 
   const handleSearch = async () => {
@@ -90,12 +53,32 @@ const InvoiceLookup = () => {
     setIsLoading(false);
   };
 
+  const handleAddToAccount = async () => {
+    if (!invoiceCode.trim()) {
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng nhập mã hóa đơn",
+        variant: "destructive",
+      });
+      return;
+    }
+    setIsLoading(true);
+
+    const responseInvoice = await sendEmailToAddBooking(invoiceCode);
+
+    if (responseInvoice.success) {
+      toast({
+        title: "Thành công",
+        description: "Đã gửi email xác nhận về mail của bạn",
+      });
+    }
+    
+    setIsLoading(false);
+  }
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('vi-VN');
   };
-
-  const roomPrice = invoice ? invoice.totalPrice * 0.95 : 0;
-  const servicePrice = invoice ? invoice.totalPrice * 0.05 : 0;
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-white">
@@ -185,13 +168,38 @@ const InvoiceLookup = () => {
           {invoice && (
             <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Receipt className="h-5 w-5 text-brand-blue" />
-                  Thông tin hóa đơn #{invoice.bookingDetails.invoiceCode}
-                </CardTitle>
-                <CardDescription>
-                  Ngày tạo: {formatDate(invoice.bookingDetails.createdAt)} • Trạng thái: <b>{invoice.bookingDetails.bookingStatus}</b>
-                </CardDescription>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Receipt className="h-5 w-5 text-brand-blue" />
+                      Thông tin hóa đơn {invoice.bookingDetails.invoiceCode}
+                    </CardTitle>
+                    <CardDescription>
+                      Ngày tạo: {formatDate(invoice.bookingDetails.createdAt)} • Trạng thái: <b>{invoice.bookingDetails.bookingStatus}</b>
+                    </CardDescription>
+                  </div>
+                  {
+                      !invoice.guestDetails.haveUser &&
+                      <Button
+                      variant="outline"
+                      className="flex items-center gap-2 text-brand-blue hover:text-brand-blue/80"
+                      disabled={isLoading}
+                      onClick={handleAddToAccount}
+                    >
+                      {isLoading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Đang xử lý...
+                      </>
+                    ) : (
+                      <>
+                      <Plus className="h-4 w-4" />
+                      Thêm vào tài khoản
+                      </>
+                    )}
+                    </Button>
+                  }
+                </div>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Property Information */}

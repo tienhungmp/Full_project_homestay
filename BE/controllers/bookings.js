@@ -4,6 +4,10 @@ const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middlewares/async');
 const sortObject = require('../utils/objectHelpers');
 const { ProductCode, VnpLocale, dateFormat, VNPay, ignoreLogger } = require('vnpay');
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
+const template_add_booking = require('../template_email/template_add_booking');
+const User = require('../models/User');
 
 const vnpay = new VNPay({
     tmnCode: "H0CR4KOU",
@@ -838,17 +842,108 @@ exports.getInvoiceInfo = asyncHandler(async (req, res, next) => {
             },
             guestDetails: booking.user ? {
                 name: booking.user.name,
-                email: booking.user.email
+                email: booking.user.email,
+                haveUser: true
             } : {
                 name: booking.guestName,
                 email: booking.guestEmail,
                 phone: booking.guestPhone,
-                address: booking.guestAddress
+                address: booking.guestAddress,
+                haveUser: false
             },
             paymentStatus: booking.paymentStatus,
             bookingStatus: booking.bookingStatus,
             createdAt: booking.createdAt,
             daysOfStay: daysOfStay
         }
+    });
+});
+
+
+// @desc    Send confirmation email for booking
+// @route   POST /api/bookings/send-confirmation
+// @access  Private
+exports.sendBookingConfirmation = asyncHandler(async (req, res, next) => {
+    const { invoiceCode } = req.body;
+
+    // Find booking by invoice code
+    const booking = await Booking.findOne({ invoiceCode });
+    
+    if (!booking) {
+        return next(new ErrorResponse('Booking not found', 404));
+    }
+
+    if(booking.user) {
+        return next(new ErrorResponse('Booking already has a user', 400));
+    }
+
+    const user = await User.findOne({ email: booking.guestEmail });
+
+    if (!user) {
+        return next(new ErrorResponse('Sorry, user has not registered an account', 404));
+    }
+
+    // Generate confirmation token
+    const confirmationToken = crypto.randomBytes(20).toString('hex');
+    
+    // Save token and expiry to booking
+    booking.confirmationToken = confirmationToken;
+    booking.confirmationTokenExpire = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+    await booking.save();
+
+    // Create confirmation URL
+    const confirmationUrl = `${process.env.FRONTEND_URL}?token=${confirmationToken}`;
+
+    // Configure email
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.EMAIL_USERNAME,
+            pass: process.env.EMAIL_PASSWORD
+        }
+    });
+
+    const mailOptions = {
+        from: process.env.EMAIL_FROM,
+        to: booking.guestEmail,
+        subject: 'Booking Confirmation Required',
+        html: template_add_booking(confirmationUrl)
+    };
+
+    // Send email
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).json({
+        success: true,
+        message: 'Confirmation email sent'
+    });
+});
+
+// @desc    Confirm booking from email
+// @route   PUT /api/bookings/confirm/:token
+// @access  Public
+exports.confirmBookingEmail = asyncHandler(async (req, res, next) => {
+    const { token } = req.params;
+
+    // Find booking with token and not expired
+    const booking = await Booking.findOne({
+        confirmationToken: token,
+        confirmationTokenExpire: { $gt: Date.now() }
+    });
+
+    if (!booking) {
+        return next(new ErrorResponse('Invalid or expired confirmation token', 400));
+    }
+
+    const user = await User.findOne({ email: booking.guestEmail });
+
+    // Update booking
+    booking.user = user
+    await booking.save();
+
+    res.status(200).json({
+        success: true,
+        message: 'Booking confirmed successfully',
+        data: booking
     });
 });

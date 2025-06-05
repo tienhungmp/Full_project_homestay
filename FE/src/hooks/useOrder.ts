@@ -181,3 +181,36 @@ export const useGetOrderById = () => {
       error,
     };
   }
+
+
+export const useSendEmailToAddBooking = () => {
+  const {createData , isLoading, error } = useApi();
+
+  const sendEmailToAddBooking = async (invoiceCode: string) => {
+    const response = await createData<any>(`/bookings/send-confirmation`, {invoiceCode});
+    return response;
+  }
+
+  return {
+    sendEmailToAddBooking,
+    isLoading,
+    error,
+  };
+}
+
+
+
+export const useConfirmEmailToAddBooking = () => {
+  const {updateData , isLoading, error } = useApi();
+
+  const confirmEmailToAddBooking = async (token: string) => {
+    const response = await updateData<any>(`/bookings/confirm/${token}`);
+    return response;
+  }
+
+  return {
+    confirmEmailToAddBooking,
+    isLoading,
+    error,
+  };
+}

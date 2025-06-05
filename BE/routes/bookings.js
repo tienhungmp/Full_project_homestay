@@ -14,53 +14,60 @@ const {
   getBookingsByHostId,
   checkAvailability,
   getBookingsByRole,
-  getInvoiceInfo
-} = require("../controllers/bookings"); // Sẽ tạo file này sau
+  getInvoiceInfo,
+  sendBookingConfirmation,
+  confirmBookingEmail,
+} = require("../controllers/bookings");
 
 const Booking = require("../models/Booking");
-
-// MergeParams: true để lấy được :homestayId từ router cha (homestays)
-const router = express.Router({ mergeParams: true });
-
 const { protect, authorize } = require("../middlewares/auth");
 const advancedResults = require("../middlewares/advancedResults");
 
-// Base route handlers
+const router = express.Router({ mergeParams: true });
+
 router
   .route("/")
   .get(
     protect,
     advancedResults(Booking, {
       path: "homestay user",
-      select: "name description email address", // Chọn các trường cần populate
+      select: "name description email address",
     }),
     getBookings
-  ) // Sử dụng advancedResults và protect
-  .post(protect, authorize("user"), createBooking); // Chỉ user mới tạo được booking
-
-router.route("/host-dashboard").get(protect, authorize("host"), getHostDashboard);
-
-router 
- .route("/create-booking-without-account").post(createBookingWithoutAccount)
+  )
+  .post(protect, authorize("user"), createBooking);
 
 router
-  .route("/payment-success")
-  .put(paymentSuccess);
+  .route("/host-dashboard")
+  .get(protect, authorize("host"), getHostDashboard);
 
-router.route("/check-availability").get(protect,authorize("host"),checkAvailability);
+router
+  .route("/create-booking-without-account")
+  .post(createBookingWithoutAccount);
 
-// Payment route handlers
+router.route("/payment-success").put(paymentSuccess);
+
+router
+  .route("/check-availability")
+  .get(protect, authorize("host"), checkAvailability);
+
+
 router.route("/create-payment").post(createPayment);
 
-router.route("/host-revenue").get(protect,authorize("host"),getHostRevenue);
+router.route("/host-revenue").get(protect, authorize("host"), getHostRevenue);
 
-router.route("/get-all-bookings-of-host").get(protect,authorize("host"),getBookingsByHostId);
+router
+  .route("/get-all-bookings-of-host")
+  .get(protect, authorize("host"), getBookingsByHostId);
 
 router.route("/get-booking-by-role").get(protect, getBookingsByRole);
 
-router.route("/search-invoice").get(getInvoiceInfo)
+router.route("/search-invoice").get(getInvoiceInfo);
 
-// Individual booking route handlers
+router.route("/send-confirmation").post(sendBookingConfirmation);
+
+router.route("/confirm/:token").put(confirmBookingEmail);
+
 router
   .route("/:id")
   .get(getBooking)

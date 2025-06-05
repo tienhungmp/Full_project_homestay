@@ -33,6 +33,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/auth";
 import axios from "axios";
 import { useGetBookingsByRole } from "@/hooks/useOrder";
+import InvoiceDetailModal from "@/components/InvoiceDetailModal";
 
 // Helper function to get status badge color
 const getStatusColor = (status: string) => {
@@ -77,7 +78,14 @@ const BookingHistory = () => {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
   const {getBookingsByRole} = useGetBookingsByRole();
+
+  const handleViewInvoiceDetail = (booking: any) => {  
+    setSelectedInvoice(booking);
+    setIsInvoiceModalOpen(true);
+  };
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -224,7 +232,7 @@ const BookingHistory = () => {
                               variant="ghost" 
                               size="sm" 
                               className="h-8 w-8 p-0"
-                              onClick={() => navigate(`/bookings/${booking.id}`)}
+                              onClick={() => handleViewInvoiceDetail(booking)}
                             >
                               <ExternalLink className="h-4 w-4" />
                             </Button>
@@ -264,7 +272,7 @@ const BookingHistory = () => {
                                 variant="outline" 
                                 size="sm" 
                                 className="h-7 text-xs"
-                                onClick={() => navigate(`/bookings/${booking.id}`)}
+                                onClick={() => handleViewInvoiceDetail(booking)}
                               >
                                 Chi tiết
                               </Button>
@@ -314,6 +322,13 @@ const BookingHistory = () => {
         </Card>
       </div>
       <Footer />
+
+            {/* Invoice Detail Modal */}
+        <InvoiceDetailModal
+          isOpen={isInvoiceModalOpen}
+          onClose={() => setIsInvoiceModalOpen(false)}
+          invoiceData={selectedInvoice}
+        />
     </div>
   );
 };

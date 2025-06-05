@@ -48,7 +48,6 @@ export function AdminOverview() {
   useEffect(() => {
     const fetchData = async () => {
       const responseData = await getTotalAnalysis();
-      console.log(responseData.data.data);
       setTotalAnalysis(responseData.data.data);
     };
     fetchData();
