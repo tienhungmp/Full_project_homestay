@@ -107,27 +107,27 @@ const template_add_booking = (confirmationUrl) => ` <!DOCTYPE html>
             <body>
                 <div class="container">
                     <div class="logo">
-                        <img src="https://www.zarla.com/images/zarla-cherry-villa-1x1-2400x2400-20230329-364cypymfghh7wcq7hx3.png?crop=1:1,smart&width=250&dpr=2" alt="Company Logo">
+                        <img src="https://www.zarla.com/images/zarla-cherry-villa-1x1-2400x2400-20230329-364cypymfghh7wcq7hx3.png?crop=1:1,smart&width=250&dpr=2" alt="Logo Công ty">
                     </div>
-                    <h1>Confirm Your Booking</h1>
-                    <p>Thank you for choosing our premium homestay service! We're excited to have you as our guest.</p>
+                    <h1>Xác Nhận Đặt Phòng Của Bạn</h1>
+                    <p>Cảm ơn bạn đã chọn dịch vụ homestay cao cấp của chúng tôi! Chúng tôi rất hân hạnh được đón tiếp bạn.</p>
                     <div class="highlight-text">
-                        Your booking is just one click away from being confirmed. Please verify your reservation to ensure everything is set for your stay.
+                        Việc đặt phòng của bạn chỉ còn một bước nữa là hoàn tất. Vui lòng xác nhận đặt phòng để đảm bảo mọi thứ đã sẵn sàng cho kỳ nghỉ của bạn.
                     </div>
-                    <p>To complete your booking process and secure your reservation, please click the confirmation button below:</p>
+                    <p>Để hoàn tất quá trình đặt phòng và đảm bảo giữ chỗ, vui lòng nhấn vào nút xác nhận bên dưới:</p>
                     <div class="btn-container">
-                        <a href="${confirmationUrl}" class="confirm-btn">Confirm My Booking</a>
+                        <a href="${confirmationUrl}" class="confirm-btn">Xác Nhận Đặt Phòng</a>
                     </div>
-                    <p class="expire-text">Please note: This confirmation link will expire in 24 hours for security purposes</p>
+                    <p class="expire-text">Lưu ý: Liên kết xác nhận này sẽ hết hạn sau 24 giờ vì lý do bảo mật</p>
                     <div class="footer">
-                        <p>Need assistance? Contact our support team</p>
-                        <p>Email: support@homestay.com | Phone: +1 234 567 890</p>
+                        <p>Cần hỗ trợ? Liên hệ với đội ngũ hỗ trợ của chúng tôi</p>
+                        <p>Email: support@homestay.com | Điện thoại: +1 234 567 890</p>
                         <div class="social-links">
                             <a href="#">Facebook</a>
                             <a href="#">Instagram</a>
                             <a href="#">Twitter</a>
                         </div>
-                        <p>© 2025 Premium Homestay. All rights reserved.</p>
+                        <p>© 2025 Premium Homestay. Mọi quyền được bảo lưu.</p>
                     </div>
                 </div>
             </body>

@@ -64,10 +64,12 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
 
   useEffect(() => {
     const fetchFavorites = async () => {
-      const responeCheck = await checkFavorites(_id);
-      if(responeCheck.success){
-        setIsWishlisted(responeCheck.data.isFavorite);
-      }
+      if(user) {
+        const responeCheck = await checkFavorites(_id);
+        if(responeCheck.success){
+          setIsWishlisted(responeCheck.data.isFavorite);
+        } 
+      }    
     };
 
     fetchFavorites();

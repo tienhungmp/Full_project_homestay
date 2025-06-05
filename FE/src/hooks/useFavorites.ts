@@ -38,8 +38,6 @@ export const useCheckFavorites = () => {
   
     const checkFavorites = async (idHomestay: string) => {
       const response = await fetchData<any>(`/favorites/${idHomestay}/check`);
-
-      console.log(response);
       return response;
     };
     
