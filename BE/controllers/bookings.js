@@ -745,7 +745,7 @@ exports.getBookingsByRole = asyncHandler(async (req, res, next) => {
         // For admin - get all bookings
         query = Booking.find()
             .populate('homestay', 'name address price')
-            .populate('user', 'name email')
+            .populate('user')
             .sort('-createdAt')
             .skip(startIndex)
             .limit(limit);
@@ -755,6 +755,7 @@ exports.getBookingsByRole = asyncHandler(async (req, res, next) => {
         // For regular users - get their own bookings
         query = Booking.find({ user: req.user._id })
             .populate('homestay', 'name address price')
+            .populate('user')
             .sort('-createdAt')
             .skip(startIndex)
             .limit(limit);
@@ -767,7 +768,7 @@ exports.getBookingsByRole = asyncHandler(async (req, res, next) => {
 
         query = Booking.find({ homestay: { $in: hostHomestayIds } })
             .populate('homestay', 'name address price')
-            .populate('user', 'name email')
+            .populate('user')
             .sort('-createdAt')
             .skip(startIndex)
             .limit(limit);

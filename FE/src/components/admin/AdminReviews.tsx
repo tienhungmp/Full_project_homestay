@@ -56,7 +56,7 @@ export function AdminReviews() {
 
   // Filter reviews based on search query
   const filteredReviews = reviews.filter(review => {
-    return review.homestay.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    return review?.homestay?.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
            review.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
            review.text.toLowerCase().includes(searchQuery.toLowerCase());
   });
@@ -109,7 +109,7 @@ export function AdminReviews() {
               {filteredReviews && filteredReviews.map((review) => (
                 <TableRow key={review._id}>
                   <TableCell>#{review._id.slice(-4)}</TableCell>
-                  <TableCell className="font-medium">{review.homestay.name}</TableCell>
+                  <TableCell className="font-medium">{review?.homestay?.name}</TableCell>
                   <TableCell>{review.user.name}</TableCell>
                   <TableCell>{new Date(review.createdAt).toLocaleDateString('vi-VN', {
                     day: '2-digit',

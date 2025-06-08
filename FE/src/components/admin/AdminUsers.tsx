@@ -121,9 +121,9 @@ export function AdminUsers() {
             Quản lý tài khoản người dùng trong hệ thống
           </p>
         </div>
-        <Button className="bg-brand-blue hover:bg-brand-blue/90">
+        {/* <Button className="bg-brand-blue hover:bg-brand-blue/90">
           <UserPlus className="mr-2 h-4 w-4" /> Thêm người dùng
-        </Button>
+        </Button> */}
       </div>
 
       <Card>

@@ -213,16 +213,17 @@ const HostDashboard = () => {
       const responseAllHomestayByHost = await getAllHomestayByHost();
       const responseCategories = await getCategories();
       if(responseReviews.success && responseInfoHostDashboard.success) {
+        setCategories(responseCategories.data.data)
         setReviewsUser(responseReviews.data.data);
         setInfoHostDashboard(responseInfoHostDashboard.data.data);
         setHomestayReviews(responseReviews.data.homestays);
         setBookings(responseAllBookingOfHost.data.data);
         setHomestays(responseAllHomestayByHost.data.data);
-        setCategories(responseCategories.data.data)
       }
     };
     fetchData();
   }, [eventAddHomestay])
+
   return (
     <ProtectedRoute allowedRoles={['host', 'admin']}>
       <div className="min-h-screen flex flex-col">

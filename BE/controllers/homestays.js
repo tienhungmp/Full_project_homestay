@@ -3,6 +3,7 @@ const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middlewares/async');
 const path = require('path');
 const Booking = require('../models/Booking');
+const Category = require('../models/Category');
 
 // @desc    Lấy tất cả homestay
 // @route   GET /api/homestays
@@ -13,7 +14,7 @@ exports.getHomestays = asyncHandler(async (req, res, next) => {
 
     // Location filter
     if (req.query.location) {
-        filter.location = { $regex: req.query.location, $options: 'i' };
+        filter.address = { $regex: req.query.location, $options: 'i' };
     }
 
     // Price range filter
@@ -25,8 +26,11 @@ exports.getHomestays = asyncHandler(async (req, res, next) => {
 
     // Types filter
     if (req.query.types) {
-        const typeArray = req.query.types.split(',');
-        filter.type = { $in: typeArray };
+        let typeArray = req.query.types.split(',')
+        const categoryIds = await Category.find({ name: { $in: typeArray } }).distinct('_id');
+        typeArray = categoryIds;
+        typeArray = typeArray.map(id => id.toString());
+        filter.category = { $in: typeArray };
     }
 
     // Amenities filter

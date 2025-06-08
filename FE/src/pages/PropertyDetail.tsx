@@ -8,6 +8,7 @@ import PropertyInfo from "@/components/property/PropertyInfo";
 import PropertyTabs from "@/components/property/PropertyTabs";
 import BookingForm from "@/components/property/BookingForm";
 import { useGetHomestayById } from "@/hooks/useHomestays";
+import PropertyCharacteristics from '@/components/property/PropertyCharacteristics';
 
 // Sample property data - in a real app this would come from an API
 const properties = [
@@ -78,6 +79,13 @@ const properties = [
         "Không mang vật nuôi",
       ],
     },
+    characteristics: [
+      "Gần trung tâm thành phố (15 phút di chuyển)",
+      "Khu vực yên tĩnh, ít tiếng ồn",
+      "View sông thoáng đãng",
+      "Gần công viên và cây xanh",
+      "Giao thông thuận tiện"
+    ],
   },
 ];
 
@@ -118,6 +126,10 @@ const PropertyDetail = () => {
                   guests={homestay.maxGuestsPerRoom}
                   host={homestay.host}
                 />
+
+              <PropertyCharacteristics 
+              characteristics= {properties[0].characteristics}
+              />
 
                 <PropertyTabs
                   description={homestay.description}

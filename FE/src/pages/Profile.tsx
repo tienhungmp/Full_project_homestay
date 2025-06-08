@@ -217,7 +217,7 @@ const Profile = () => {
                               {bookings.map((booking) => (
                                 <TableRow key={booking.invoiceCode}>
                                   <TableCell className="font-medium">{booking.invoiceCode}</TableCell>
-                                  <TableCell>{booking.homestay.address}</TableCell>
+                                  <TableCell>{booking?.homestay?.address}</TableCell>
                                   <TableCell>{new Date(booking.checkInDate).toLocaleDateString('vi-VN')} - {new Date(booking.checkOutDate).toLocaleDateString('vi-VN')}</TableCell>
                                   <TableCell>{booking.totalPrice.toLocaleString('vi-VN')}đ</TableCell>
                                   <TableCell>
@@ -252,13 +252,13 @@ const Profile = () => {
                                   <div className="w-1/3">
                                     <img 
                                       src="https://img.freepik.com/free-vector/happy-tourists-choosing-hotel-booking-room-online-flat-illustration_74855-10811.jpg"
-                                      alt={booking.homestay.name}
+                                      alt={booking?.homestay?.name}
                                       className="h-full w-full object-cover"
                                     />
                                   </div>
                                   <div className="w-2/3 p-4">
                                     <div className="flex justify-between items-start mb-2">
-                                      <h3 className="font-semibold text-sm line-clamp-1">{booking.homestay.name}</h3>
+                                      <h3 className="font-semibold text-sm line-clamp-1">{booking?.homestay?.name}</h3>
                                       <Badge className={getStatusColor(booking.bookingStatus)}>
                                           {statusMapping[booking.bookingStatus]}
                                       </Badge>

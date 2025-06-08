@@ -219,7 +219,7 @@ const BookingHistory = () => {
                       {bookings.map((booking) => (
                         <TableRow key={booking.invoiceCode}>
                           <TableCell className="font-medium">{booking.invoiceCode}</TableCell>
-                          <TableCell>{booking.homestay.address}</TableCell>
+                          <TableCell>{booking?.homestay?.address}</TableCell>
                           <TableCell>{new Date(booking.checkInDate).toLocaleDateString('vi-VN')} - {new Date(booking.checkOutDate).toLocaleDateString('vi-VN')}</TableCell>
                           <TableCell>{booking.totalPrice.toLocaleString('vi-VN')}đ</TableCell>
                           <TableCell>
