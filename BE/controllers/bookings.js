@@ -91,8 +91,18 @@ exports.createBooking = asyncHandler(async (req, res, next) => {
         guestCount,
         totalPrice,
         bookingStatus,
+        numberOfRooms,
         paymentStatus
     } = req.body;
+
+
+    console.log(req.user)
+
+    if(req.user && (!req.user.address || !req.user.phone)) {
+        return next(
+            new ErrorResponse(`Bạn chưa cập nhật địa chỉ hoặc số điền thoại`, 404)
+        );
+    }
 
     // 1. Kiểm tra homestay tồn tại
     const homestay = await Homestay.findById(propertyId);
@@ -113,20 +123,15 @@ exports.createBooking = asyncHandler(async (req, res, next) => {
 
     // 3. Kiểm tra xem đã có người đặt và thanh toán trong khoảng thời gian này chưa
     // Count existing bookings for the same date range
-    const existingBookings = await Booking.find({
-        homestay: propertyId,
-        paymentStatus: 'paid',
-        $or: [
-            {
-                checkInDate: { $lt: checkOutDate },
-                checkOutDate: { $gt: checkInDate }
-            }
-        ]
-    });
+     const {isAvailable,totalRooms, bookedRooms, remainingRooms} = await sortObject.checkHomestayAvailabilityRoom(propertyId, checkIn, checkOut)
 
     // Check if number of existing bookings exceeds available rooms
-    if (existingBookings.length >= homestay.numberOfRooms) {
+    if (!isAvailable) {
         return next(new ErrorResponse('Homestay này đã hết phòng trong khoảng thời gian bạn chọn.', 400));
+    }
+
+    if(numberOfRooms > remainingRooms) {
+        return next(new ErrorResponse(`Homestay này chỉ còn ${remainingRooms} phòng trong khoảng thời gian bạn chọn.`, 400));
     }
 
     // 4. Tạo booking
@@ -138,6 +143,7 @@ exports.createBooking = asyncHandler(async (req, res, next) => {
         numberOfGuests: guestCount,
         totalPrice,
         bookingStatus,
+        numberOfRooms,
         paymentStatus,
     });
 
@@ -714,15 +720,20 @@ exports.checkAvailability = asyncHandler(async (req, res, next) => {
     });
 
     const totalRooms = homestay.numberOfRooms;
-    const availableRooms = totalRooms - bookedRooms.length;
+    const totalBookedRooms = bookedRooms.reduce((acc, booking) => acc + booking.numberOfRooms, 0);
+    const availableRooms = totalRooms - totalBookedRooms;
+
+// Calculate occupancy rate
+    const occupancyRate = totalBookedRooms > 0 ? ((totalBookedRooms / totalRooms) * 100).toFixed(2) : 0;
 
     res.status(200).json({
         success: true,
         data: {
             totalRooms,
-            bookedRooms,
+            bookedRooms: totalBookedRooms,
             availableRooms,
-            date: checkDate
+            date: checkDate,
+            occupancyRate: `${occupancyRate}%`,
         }
     });
 });

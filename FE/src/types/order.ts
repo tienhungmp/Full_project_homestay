@@ -7,6 +7,7 @@ export interface OrderRequest {
     totalPrice: number,
     bookingStatus: string,
     paymentStatus: string,
+    numberOfRooms: number
   }
   
   export interface Order {
@@ -30,6 +31,7 @@ export interface OrderRequest {
       totalPrice: number;
       bookingStatus: string;
       paymentStatus: string;
+      numberOfRooms: number;
       guestName: string;
       guestEmail: string;
       guestPhone: string;

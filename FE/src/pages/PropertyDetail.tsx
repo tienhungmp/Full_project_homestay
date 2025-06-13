@@ -121,7 +121,7 @@ const PropertyDetail = () => {
                 <PropertyInfo
                   type={property.type}
                   location={homestay.address}
-                  bedrooms={property.bedrooms}
+                  bedrooms={homestay.numberOfRooms}
                   bathrooms={property.bathrooms}
                   guests={homestay.maxGuestsPerRoom}
                   host={homestay.host}
@@ -148,6 +148,7 @@ const PropertyDetail = () => {
                   maxGuests={homestay.maxGuestsPerRoom}
                   propertyId={homestay._id}
                   propertyName={homestay.name}
+                  numberOfRooms={homestay.numberOfRooms}
                 />
               </div>
             </div>

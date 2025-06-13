@@ -76,6 +76,12 @@ const BookingSchema = new mongoose.Schema({
     required: false,
     default: undefined
   },
+  numberOfRooms: {
+    type: Number,
+    required: [true, 'Please enter number of rooms'],
+    min: 1,
+    default: 1
+  },
   createdAt: {
     type: Date,
     default: Date.now,

@@ -4,6 +4,7 @@ const asyncHandler = require('../middlewares/async');
 const path = require('path');
 const Booking = require('../models/Booking');
 const Category = require('../models/Category');
+const sortObject = require('../utils/objectHelpers');
 
 // @desc    Lấy tất cả homestay
 // @route   GET /api/homestays
@@ -468,22 +469,12 @@ exports.checkHomestayAvailability = asyncHandler(async (req, res, next) => {
     }
 
     // Check for any overlapping bookings
-    const existingBooking = await Booking.findOne({
-        homestay: homestayId,
-        $or: [
-            // Check if new booking overlaps with any existing booking
-            {
-                checkInDate: { $lt: checkOutDate },
-                checkOutDate: { $gt: checkInDate }
-            }
-        ],
-        paymentStatus: 'paid'
-    });
+    const {isAvailable,totalRooms, bookedRooms, remainingRooms} = await sortObject.checkHomestayAvailabilityRoom(homestayId, checkIn, checkOut)
 
     res.status(200).json({
         success: true,
         data: {
-            isAvailable: !existingBooking,
+            isAvailable,
             checkIn: checkInDate,
             checkOut: checkOutDate,
             homestayId: homestayId

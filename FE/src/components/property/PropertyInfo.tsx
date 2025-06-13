@@ -19,7 +19,7 @@ const PropertyInfo = ({ type, location, bedrooms, bathrooms, guests, host }: Pro
       <div>
         <h2 className="text-xl font-semibold">{type} tại {location.split(',')[0]}</h2>
         <p className="text-muted-foreground">
-          {bedrooms} phòng ngủ • {bathrooms} phòng tắm • Tối đa {guests} khách
+          {bedrooms} phòng ngủ • Tối đa {guests} khách
         </p>
       </div>
       <div className="flex items-center">

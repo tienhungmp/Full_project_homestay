@@ -59,7 +59,8 @@ const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
   onClose,
   property
 }) => {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const nowDay = new Date(new Date().setHours(0,0,0));
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(nowDay);
   const [infoRoom, setInfoRoom] = useState<any>([]);
   const {getCheckAvailabilityHomestay} = useCheckAvailabilityHomestay()
   
@@ -121,7 +122,7 @@ const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({
                 <CalendarIcon className="h-4 w-4 text-muted-foreground" />
                 <span>Tỷ lệ lấp đầy:</span>
               </div>
-              <span className="font-medium">{occupancyRate}%</span>
+              <span className="font-medium">{infoRoom.occupancyRate}</span>
               
               <div className="flex items-center gap-2">
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
