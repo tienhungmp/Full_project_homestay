@@ -7,16 +7,18 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarIcon, Search } from "lucide-react";
 import { format } from "date-fns";
 import { vi } from 'date-fns/locale';
+import { useNavigate } from 'react-router-dom';
 
 const SearchBox = () => {
   const [location, setLocation] = useState('');
   const [checkIn, setCheckIn] = useState<Date | undefined>();
   const [checkOut, setCheckOut] = useState<Date | undefined>();
   const [guests, setGuests] = useState(1);
+  const navigate = useNavigate();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle search logic here
+    navigate('/search')
   };
 
   return (

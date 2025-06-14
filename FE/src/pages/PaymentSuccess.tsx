@@ -126,6 +126,10 @@ const PaymentSuccess = () => {
                   <span className="font-medium">{data.numberOfGuests} người</span>
                 </div>
                 <div className="flex justify-between pb-2 border-b">
+                  <span className="text-muted-foreground">Số phòng</span>
+                  <span className="font-medium">{data.numberOfRooms} phòng</span>
+                </div>
+                <div className="flex justify-between pb-2 border-b">
                   <span className="text-muted-foreground">Trạng thái đơn hàng</span>
                   <span className="font-medium">{statusBookingTranferLanguageVn[data.bookingStatus]}</span>
                 </div>

@@ -157,6 +157,12 @@ const PaymentMethod = () => {
                               {booking.numberOfGuests}
                             </span>
                           </p>
+                          <p className="text-sm mt-2">
+                            Số phòng:{" "}
+                            <span className="font-medium">
+                              {booking.numberOfRooms}
+                            </span>
+                          </p>
                         </div>
                         <div className="text-right">
                           <p className="text-lg font-bold">

@@ -831,7 +831,7 @@ exports.getInvoiceInfo = asyncHandler(async (req, res, next) => {
     // Find booking by invoice code
     const booking = await Booking.findOne({ invoiceCode })
         .populate('homestay', 'name address price')
-        .populate('user', 'name email');
+        .populate('user');
 
     if (!booking) {
         return next(new ErrorResponse(`No invoice found with code ${invoiceCode}`, 404));
@@ -855,6 +855,8 @@ exports.getInvoiceInfo = asyncHandler(async (req, res, next) => {
             guestDetails: booking.user ? {
                 name: booking.user.name,
                 email: booking.user.email,
+                phone: booking.user.phone,
+                address: booking.user.address,
                 haveUser: true
             } : {
                 name: booking.guestName,

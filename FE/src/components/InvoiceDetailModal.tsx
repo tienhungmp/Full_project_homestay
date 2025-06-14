@@ -96,7 +96,7 @@ const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                 <p className="font-medium text-lg">
                   {invoiceData.homestay.name}
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-3">
                   <div className="flex items-center">
                     <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
                     <div>
@@ -123,6 +123,15 @@ const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                       <p className="text-sm text-muted-foreground">Số khách</p>
                       <p className="font-medium">
                         {invoiceData.numberOfGuests}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center">
+                    <Home className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Số phòng</p>
+                      <p className="font-medium">
+                        {invoiceData.numberOfRooms}
                       </p>
                     </div>
                   </div>
